@@ -5,8 +5,7 @@ with open('2016\\Input\\2016-07.txt') as input:
 
 def check_ip_adress(ip_adress, part):
     inside_brackets = False
-    supports_tls = False
-    supports_ssl = False
+    valid = False
     found_ssl = []
 
     end = 3 if part else 2
@@ -25,7 +24,7 @@ def check_ip_adress(ip_adress, part):
                     if inside_brackets:
                         return False
                     else:
-                        supports_tls = True
+                        valid = True
             else:
                 c1, c2, c3 = ip_adress[i], ip_adress[i + 1], ip_adress[i + 2]
                 if c1 == c3 and c2 != c1:
@@ -33,7 +32,7 @@ def check_ip_adress(ip_adress, part):
                     if (c2 + c1 + c2, not inside_brackets) in found_ssl:
                         return True
     
-    return supports_tls
+    return valid
 
 def count_valid_ip_adresses(ip_adress_list, part):
     count = 0
