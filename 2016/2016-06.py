@@ -14,13 +14,13 @@ def count_characters(string, part):
         else:
             char_count[c] = 1
     
-    return max(char_count, key=char_count.get) if part else min(char_count, key=char_count.get)
+    return max(char_count, key=char_count.get) if not part else min(char_count, key=char_count.get)
 
 def decypher(code_list, part):
     code = ''
 
     for s in code_list:
-        code += count_characters(s, not part)
+        code += count_characters(s, part)
 
     return code
 

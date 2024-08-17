@@ -8,7 +8,7 @@ def check_ip_adress(ip_adress, part):
     valid = False
     found_ssl = []
 
-    end = 3 if part else 2
+    end = 3 if not part else 2
 
     for i in range(len(ip_adress) - end):
         if ip_adress[i] == '[':
@@ -18,7 +18,7 @@ def check_ip_adress(ip_adress, part):
             inside_brackets = False
             continue
         else:
-            if part:
+            if not part:
                 c1, c2, c3, c4 = ip_adress[i], ip_adress[i + 1], ip_adress[i + 2], ip_adress[i + 3]
                 if c1 == c4 and c2 == c3 and c1 != c3:
                     if inside_brackets:
@@ -38,7 +38,7 @@ def count_valid_ip_adresses(ip_adress_list, part):
     count = 0
 
     for ip in ip_adress_list:
-        count += 1 if check_ip_adress(ip, not part) else 0
+        count += 1 if check_ip_adress(ip, part) else 0
 
     return count
 
