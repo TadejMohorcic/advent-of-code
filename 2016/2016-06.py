@@ -20,12 +20,12 @@ def decypher(code_list, part):
     code = ''
 
     for s in code_list:
-        code += count_characters(s, part)
+        code += count_characters(s, not part)
 
     return code
 
-part_one = decypher(text_input, True)
-part_two = decypher(text_input, False)
+part_one = decypher(text_input, False)
+part_two = decypher(text_input, True)
 
 print('--- Day 6: Signals and Noise ---')
 print(f' -  Part one solution: {part_one}.')

@@ -38,12 +38,12 @@ def count_valid_ip_adresses(ip_adress_list, part):
     count = 0
 
     for ip in ip_adress_list:
-        count += 1 if check_ip_adress(ip, part) else 0
+        count += 1 if check_ip_adress(ip, not part) else 0
 
     return count
 
-part_one = count_valid_ip_adresses(ip_adresses, True)
-part_two = count_valid_ip_adresses(ip_adresses, False)
+part_one = count_valid_ip_adresses(ip_adresses, False)
+part_two = count_valid_ip_adresses(ip_adresses, True)
 
 print('--- Day 7: Internet Protocol Version 7 ---')
 print(f' -  Part one solution: {part_one}.')
