@@ -1,5 +1,6 @@
-with open('2016\\Input\\2016-03.txt') as input:
+with open('2016/Input/2016-03.txt') as input:
     triangles = []
+    
     for line in input:
         triangles.append([int(x) for x in line.strip().split()])
 

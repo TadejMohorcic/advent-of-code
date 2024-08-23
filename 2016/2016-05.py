@@ -1,6 +1,6 @@
 import hashlib
 
-with open('2016\\Input\\2016-05.txt') as input:
+with open('2016/Input/2016-05.txt') as input:
     door_id = input.readline().strip()
 
 def list_to_string(list):

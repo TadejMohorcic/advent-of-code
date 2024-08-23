@@ -1,5 +1,6 @@
-with open('2016\\Input\\2016-06.txt') as input:
+with open('2016/Input/2016-06.txt') as input:
     text_input = ['','','','','','','','']
+    
     for line in input:
         text = line.strip()
         for i in range(len(text)):

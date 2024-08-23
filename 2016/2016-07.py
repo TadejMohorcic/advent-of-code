@@ -1,5 +1,6 @@
-with open('2016\\Input\\2016-07.txt') as input:
+with open('2016/Input/2016-07.txt') as input:
     ip_adresses = []
+    
     for line in input:
         ip_adresses.append(line.strip())
 

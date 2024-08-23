@@ -1,7 +1,8 @@
 import numpy as np
 
-with open('2016\\Input\\2016-08.txt') as input:
+with open('2016/Input/2016-08.txt') as input:
     instructions = []
+    
     for line in input:
         text = line.strip().split()
         if len(text) == 2:
@@ -53,16 +54,20 @@ def update_screen(instruction_list, size):
     return screen
 
 def display_screen(screen):
-    _, x = np.shape(screen)
+    y, x = np.shape(screen)
 
-    for i in range(0, x, 5):
-        print(screen[:, i:i+5])
-        print('\n')
+    for j in range(y):
+        line = ''
+        for i in range(x):
+            if screen[j, i] == 0:
+                line += ' '
+            else:
+                line += '#'
+        print(line)
 
 updated_screen = update_screen(instructions, (6, 50))
 part_one = np.sum(updated_screen)
-display_screen(updated_screen)
 
 print('--- Day 8: Two-Factor Authentication ---')
 print(f' -  Part one solution: {part_one}.')
-print(f' -  Part two solution: upojflbcez.')
+display_screen(updated_screen)

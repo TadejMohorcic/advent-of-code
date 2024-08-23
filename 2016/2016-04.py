@@ -1,19 +1,16 @@
 letters = list('abcdefghijklmnopqrstuvwxyz')
 
-with open('2016\\Input\\2016-04.txt') as input:
+with open('2016/Input/2016-04.txt') as input:
     rooms = []
-
+    
     for line in input:
         text = line.strip().split('-')
-
         chars = ''
         for i in range(len(text) - 1):
             chars += text[i]
-
         last = text[-1].split('[')
         identification = int(last[0])
         common_letters = last[1][:-1]
-
         rooms.append((chars, identification, common_letters))
 
 def count_characters(string):

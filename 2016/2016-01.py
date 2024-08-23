@@ -1,4 +1,4 @@
-with open('2016\\Input\\2016-01.txt') as input:
+with open('2016/Input/2016-01.txt') as input:
     directions = input.readline().strip().split(', ')
 
 def follow_directions(direction_list, part):

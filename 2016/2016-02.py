@@ -1,5 +1,6 @@
-with open('2016\\Input\\2016-02.txt') as input:
+with open('2016/Input/2016-02.txt') as input:
     instructions = []
+    
     for line in input:
         instructions.append(line.strip())
 
