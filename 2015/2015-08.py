@@ -1,49 +1,50 @@
-part_one = 0
-part_two = 0
+with open('2015/Input/2015-08.txt') as input:
+    lines = []
 
-def count_strings(s):
+    for line in input:
+        stripped = line.strip()
+        lines.append(stripped)
+
+def count_characters(string):
     count = 0
     i = 0
-    
-    while i < len(s):
-        if s[i] == '\\':
-            if s[i+1] == "x":
+
+    while i < len(string):
+        if string[i] == '\\':
+            if string[i + 1] == 'x':
                 i += 4
             else:
                 i += 2
         else:
             i += 1
         count += 1
-    
+
     return count
 
-def encode_string(s):
-    encoded_s = '"'
-    for c in s:
-        if c == '\"':
-            encoded_s += '\\\"'
-        elif c == '\\':
-            encoded_s += '\\\\'
+def encode_characters(string):
+    encoded_string = '"'
+
+    for char in string:
+        if char == '\"':
+            encoded_string += '\\\"'
+        elif char == '\\':
+            encoded_string += '\\\\'
         else:
-            encoded_s += c
+            encoded_string += char
 
-    encoded_s += '"'
+    return encoded_string + '"'
 
-    return encoded_s
+def string_length(string_list):
+    len1, len2 = 0, 0
 
+    for s in string_list:
+        length = len(s)
+        len1 += length - count_characters(s) + 2
+        len2 += len(encode_characters(s)) - length
 
-with open('2015\\Input//day08.txt') as input:
-    for line in input:
-        stripped = line.strip()
-        encode = encode_string(stripped)
+    return len1, len2
 
-        n1 = len(stripped)
-        n2 = len(encode)
-
-        c1 = count_strings(stripped) - 2
-
-        part_one += n1 - c1
-        part_two += n2 - n1
+part_one, part_two = string_length(lines)
 
 print('--- Day 8: Matchsticks ---')
 print(f' -  Part one solution: {part_one}.')
