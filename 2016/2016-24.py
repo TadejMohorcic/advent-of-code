@@ -86,8 +86,10 @@ def shortest_path(grid_map, graph, part):
 
     return min_cost
 
-part_one = shortest_path(grid, create_graph(grid), False)
-part_two = shortest_path(grid, create_graph(grid), True)
+graph = create_graph(grid)
+
+part_one = shortest_path(grid, graph, False)
+part_two = shortest_path(grid, graph, True)
 
 print('--- Day 24: Air Duct Spelunking ---')
 print(f' -  Part one solution: {part_one}.')
