@@ -39,8 +39,6 @@ def count_scratchcard(scratchcard_dict):
     
     return sum(number_of_scratchcards)
 
-
-
 part_one = calculate_points(scratchcards)
 part_two = count_scratchcard(scratchcards)
 

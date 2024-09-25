@@ -54,7 +54,6 @@ def calculate_rations(text_list, chars, number_dict, part):
 part_one = calculate_rations(text, '@#$%&/=+-*', numbers, False)
 part_two = calculate_rations(text, '*', numbers, True)
 
-
 print('--- Day 3: Gear Ratios ---')
 print(f' -  Part one solution: {part_one}.')
 print(f' -  Part two solution: {part_two}.')

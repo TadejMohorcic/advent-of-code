@@ -28,7 +28,6 @@ def number_of_ways(time_list, distance_list):
 
     return res
 
-
 part_one = number_of_ways(times, distances)
 time, distance = join_list(times, distances)
 part_two = number_of_ways([time], [distance])

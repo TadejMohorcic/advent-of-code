@@ -29,7 +29,6 @@ def seed_to_range(seed_list):
 
     return seed_ranges
 
-
 def update_seeds(seed_list, map_dict):
     updated_seeds = {s: s for s in seeds}
 
