@@ -15,7 +15,6 @@ def join_list(time_list, distance_list):
 
     return int(time_string), int(distance_string)
 
-
 def number_of_ways(time_list, distance_list):
     res = 1
 
