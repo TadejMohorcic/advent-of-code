@@ -26,7 +26,6 @@ def modular_exponent(base, exp, mod):
 
 end = grid_to_row(row, column)
 part_one = (start * modular_exponent(mul, end - 1, div)) % div
-
     
 print('--- Day 25: Let It Snow ---')
 print(f' -  Part one solution: {part_one}.')

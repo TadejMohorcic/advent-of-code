@@ -1,7 +1,7 @@
 import numpy as np
 
 # boss = (hp, damage)
-with open('2015\\Input\\2015-22.txt') as input:
+with open('2015/Input/2015-22.txt') as input:
     hp = int(input.readline().strip().split()[-1])
     dmg = int(input.readline().strip().split()[-1])
 
@@ -72,4 +72,3 @@ part_two = least_mana
 print('--- Day 22: Wizard Simulator 20XX ---')
 print(f' -  Part one solution: {part_one}.')
 print(f' -  Part two solution: {part_two}.')
-
