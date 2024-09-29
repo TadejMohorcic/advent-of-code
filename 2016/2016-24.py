@@ -1,5 +1,4 @@
 import heapq
-import time
 
 with open('2016/Input/2016-24.txt') as input:
     grid = []
