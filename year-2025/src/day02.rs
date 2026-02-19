@@ -5,7 +5,7 @@ use std::ops::Range;
 use std::collections::HashSet;
 
 pub fn main() -> Result<(), Error> {
-    // let path = "input/day02_test.txt";
+    // let path = "input/day02-test.txt";
     let path = "input/day02.txt";
 
     let input = File::open(path)?;
@@ -75,7 +75,7 @@ fn generate_mask(n: usize, two_repeats: bool) -> Vec<Vec<u64>> {
     masks
 }
 
-fn sum_valid_ids(ranges: &Vec<Range<u64>>, mask: &Vec<Vec<u64>>) -> u64 {
+fn sum_valid_ids(ranges: &[Range<u64>], mask: &[Vec<u64>]) -> u64 {
     let mut valid_ids: HashSet<u64> = HashSet::new();
 
     for i in 1..99_999 {

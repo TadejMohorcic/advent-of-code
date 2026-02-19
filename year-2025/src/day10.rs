@@ -1,9 +1,9 @@
 use std::fs::File;
-use std::io::{self, BufReader, BufRead, Error};
+use std::io::{BufReader, BufRead, Error};
 
 pub fn main() -> Result<(), Error> {
-    // let path = "input/day10_test.txt";
-    let path = "input/day10.txt";
+    let path = "input/day10-test.txt";
+    // let path = "input/day10.txt";
 
     let input = File::open(path)?;
     let buffered = BufReader::new(input);

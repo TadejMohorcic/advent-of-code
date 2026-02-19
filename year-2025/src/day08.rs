@@ -4,7 +4,7 @@ use std::io::{BufReader, BufRead, Error};
 use std::collections::{HashMap, HashSet};
 
 pub fn main() -> Result<(), Error> {
-    // let path = "input/day08_test.txt";
+    // let path = "input/day08-test.txt";
     let path = "input/day08.txt";
 
     let input = File::open(path)?;
@@ -43,7 +43,7 @@ fn calculate_distance(p1: Position, p2: Position) -> i64 {
     distance
 }
 
-fn get_distances_sorted(positions: &Vec<Position>) -> Vec<(i64, usize, usize)> {
+fn get_distances_sorted(positions: &[Position]) -> Vec<(i64, usize, usize)> {
     let n = positions.len();
     let mut distances = Vec::new();
 
@@ -61,7 +61,7 @@ fn get_distances_sorted(positions: &Vec<Position>) -> Vec<(i64, usize, usize)> {
     distances
 }
 
-fn connect_boxes(positions: &Vec<Position>, num_of_steps: usize) -> (i64, i64) {
+fn connect_boxes(positions: &[Position], num_of_steps: usize) -> (i64, i64) {
     let mut part_one = 1;
     let mut part_two = 1;
 

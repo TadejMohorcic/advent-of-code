@@ -2,7 +2,7 @@ use std::fs::File;
 use std::io::{BufReader, BufRead, Error};
 
 pub fn main() -> Result<(), Error> {
-    // let path = "input/day06_test.txt";
+    // let path = "input/day06-test.txt";
     let path = "input/day06.txt";
 
     let input = File::open(path)?;
@@ -44,7 +44,7 @@ pub fn main() -> Result<(), Error> {
     Ok(())
 }
 
-fn calculate_top_down(numbers: Vec<Vec<u64>>, instructions: &Vec<char>) -> u64 {
+fn calculate_top_down(numbers: Vec<Vec<u64>>, instructions: &[char]) -> u64 {
     let mut top_down_sum: Vec<(usize, u64)> = numbers[0].iter().enumerate().map(|(x, y)| (x, *y)).collect();
     let n = numbers.len();
 
@@ -55,7 +55,7 @@ fn calculate_top_down(numbers: Vec<Vec<u64>>, instructions: &Vec<char>) -> u64 {
     top_down_sum.iter().fold(0, |acc, (_, x)| acc + x)
 }
 
-fn calculate_left_right(numbers: Vec<u64>, instructions: &Vec<char>) -> u64 {
+fn calculate_left_right(numbers: Vec<u64>, instructions: &[char]) -> u64 {
     let mut total_value = 0;
 
     let mut index = 0;

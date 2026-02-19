@@ -5,7 +5,7 @@ use std::ops::Range;
 use std::cmp::max;
 
 pub fn main() -> Result<(), Error> {
-    // let path = "input/day05_test.txt";
+    // let path = "input/day05-test.txt";
     let path = "input/day05.txt";
 
     let input = File::open(path)?;
@@ -61,7 +61,7 @@ fn merge_ranges(mut ranges: Vec<Range<u64>>) -> Vec<Range<u64>> {
     merged_ranges
 }
 
-fn count_fresh_ingredients(ingredients: &Vec<u64>, ranges: &Vec<Range<u64>>) -> usize {
+fn count_fresh_ingredients(ingredients: &[u64], ranges: &[Range<u64>]) -> usize {
     let mut fresh_ingredients = 0;
 
     for ingredient in ingredients {
@@ -76,7 +76,7 @@ fn count_fresh_ingredients(ingredients: &Vec<u64>, ranges: &Vec<Range<u64>>) -> 
     fresh_ingredients
 }
 
-fn all_fresh_ingredients(ranges: &Vec<Range<u64>>) -> usize {
+fn all_fresh_ingredients(ranges: &[Range<u64>]) -> usize {
     let mut fresh_ingredients = 0;
 
     for range in ranges {

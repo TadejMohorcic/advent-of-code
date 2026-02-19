@@ -2,7 +2,7 @@ use std::fs::File;
 use std::io::{BufReader, BufRead, Error};
 
 pub fn main() -> Result<(), Error> {
-    // let path = "input/day07_test.txt";
+    // let path = "input/day07-test.txt";
     let path = "input/day07.txt";
 
     let input = File::open(path)?;
@@ -30,7 +30,7 @@ pub fn main() -> Result<(), Error> {
     Ok(())
 }
 
-fn move_in_manifold(locations: &Vec<Vec<u64>>) -> (u64, u64) {
+fn move_in_manifold(locations: &[Vec<u64>]) -> (u64, u64) {
     let mut number_of_splits = 0;
 
     let starting_position = locations[0][0];

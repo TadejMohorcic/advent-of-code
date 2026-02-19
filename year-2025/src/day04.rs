@@ -4,7 +4,7 @@ use std::io::{BufReader, BufRead, Error};
 use std::collections::HashSet;
 
 pub fn main() -> Result<(), Error> {
-    // let path = "input/day04_test.txt";
+    // let path = "input/day04-test.txt";
     let path = "input/day04.txt"; 
 
     let input = File::open(path)?;

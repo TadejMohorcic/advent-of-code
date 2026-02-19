@@ -2,7 +2,7 @@ use std::fs::File;
 use std::io::{self, BufReader, BufRead, Error};
 
 pub fn main() -> Result<(), Error> {
-    // let path = "input/day01_test.txt";
+    // let path = "input/day01-test.txt";
     let path = "input/day01.txt";
 
     let input = File::open(path)?;
@@ -39,7 +39,7 @@ pub fn main() -> Result<(), Error> {
     Ok(())
 }
 
-fn count_zeros(instructions: &Vec<i32>, mut position: i32) -> i32 {
+fn count_zeros(instructions: &[i32], mut position: i32) -> i32 {
     let mut result = 0;
     
     for instruction in instructions {
@@ -53,7 +53,7 @@ fn count_zeros(instructions: &Vec<i32>, mut position: i32) -> i32 {
     result
 }
 
-fn passing_zero(instructions: &Vec<i32>, mut position: i32) -> i32 {
+fn passing_zero(instructions: &[i32], mut position: i32) -> i32 {
     let mut result = 0;
 
     for instruction in instructions {

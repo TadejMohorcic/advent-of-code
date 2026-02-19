@@ -2,7 +2,7 @@ use std::fs::File;
 use std::io::{BufReader, BufRead, Error};
 
 pub fn main() -> Result<(), Error> {
-    // let path = "input/day03_test.txt";
+    // let path = "input/day03-test.txt";
     let path = "input/day03.txt";
 
     let input = File::open(path)?;
@@ -27,7 +27,7 @@ pub fn main() -> Result<(), Error> {
     Ok(())
 }
 
-fn highest_joltage(batteries: &Vec<Vec<u64>>, capacity: usize) -> u64 {
+fn highest_joltage(batteries: &[Vec<u64>], capacity: usize) -> u64 {
     let mut total_joltage = 0;
 
     for battery in batteries {
