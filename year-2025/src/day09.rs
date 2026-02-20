@@ -1,8 +1,9 @@
 use std::fs::File;
 use std::io::{BufReader, BufRead, Error};
 
-use std::collections::{HashSet, HashMap};
 use std::cmp::{min, max};
+use std::collections::{HashSet, HashMap};
+use std::collections::hash_map::Entry;
 
 pub fn main() -> Result<(), Error> {
     // let path = "input/day09-test.txt";
@@ -153,24 +154,21 @@ fn is_valid_rectangle(p1: Position, p2: Position, points: &[Position], cache: &m
         let p1 = Position{x: i, y: min_y};
         let p2 = Position{x: i, y: max_y};
 
-        let p1_inside: bool;
-        let p2_inside: bool;
+        let p1_inside = match cache.entry(p1) {
+            Entry::Occupied(e) => e.get().clone(),
+            Entry::Vacant(e) => {
+                let inside = is_inside(*e.key(), points);
+                e.insert(inside).clone()
+            }
+        };
 
-        if let Some(&is_inside) = cache.get(&p1) {
-            p1_inside = is_inside;
-        }
-        else {
-            p1_inside = is_inside(p1, points);
-            cache.insert(p1, p1_inside);
-        }
-
-        if let Some(&is_inside) = cache.get(&p2) {
-            p2_inside = is_inside;
-        }
-        else {
-            p2_inside = is_inside(p2, points);
-            cache.insert(p2, p2_inside);
-        }
+        let p2_inside = match cache.entry(p2) {
+            Entry::Occupied(e) => e.get().clone(),
+            Entry::Vacant(e) => {
+                let inside = is_inside(*e.key(), points);
+                e.insert(inside).clone()
+            }
+        };
 
         if !p1_inside || !p2_inside {
             return false
@@ -181,24 +179,21 @@ fn is_valid_rectangle(p1: Position, p2: Position, points: &[Position], cache: &m
         let p1 = Position{x: min_x, y: i};
         let p2 = Position{x: max_x, y: i};
 
-        let p1_inside: bool;
-        let p2_inside: bool;
+        let p1_inside = match cache.entry(p1) {
+            Entry::Occupied(e) => e.get().clone(),
+            Entry::Vacant(e) => {
+                let inside = is_inside(*e.key(), points);
+                e.insert(inside).clone()
+            }
+        };
 
-        if let Some(&is_inside) = cache.get(&p1) {
-            p1_inside = is_inside;
-        }
-        else {
-            p1_inside = is_inside(p1, points);
-            cache.insert(p1, p1_inside);
-        }
-
-        if let Some(&is_inside) = cache.get(&p2) {
-            p2_inside = is_inside;
-        }
-        else {
-            p2_inside = is_inside(p2, points);
-            cache.insert(p2, p2_inside);
-        }
+        let p2_inside = match cache.entry(p2) {
+            Entry::Occupied(e) => e.get().clone(),
+            Entry::Vacant(e) => {
+                let inside = is_inside(*e.key(), points);
+                e.insert(inside).clone()
+            }
+        };
 
         if !p1_inside || !p2_inside {
             return false
