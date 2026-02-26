@@ -2,7 +2,7 @@ use std::fs::File;
 use std::io::{BufReader, BufRead, Error};
 
 pub fn main() -> Result<(), Error> {
-    // let path = "input/day12_test.txt";
+    // let path = "input/day12-test.txt";
     let path = "input/day12.txt";
 
     let input = File::open(path)?;
