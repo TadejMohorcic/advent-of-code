@@ -4,6 +4,8 @@ use std::io::{BufReader, BufRead, Error};
 use std::collections::HashMap;
 use std::collections::hash_map::Entry;
 
+use rayon::prelude::*;
+
 pub fn main() -> Result<(), Error> {
     // let path = "input/day10-test.txt";
     let path = "input/day10.txt";
@@ -90,22 +92,16 @@ fn find_good_combinations<'a>(lights: &[i64], combinations: &'a [Vec<Vec<usize>>
 }
 
 fn min_button_presses(manuals: &[Manual]) -> usize {
-    let mut total_button_presses = 0;
-
-    for manual in manuals {
+    manuals.par_iter().map(|manual| {
         let buttons = &manual.buttons;
         let lights = &manual.indicator_lights;
-
         let combinations = get_combinations(buttons);
         let good_combinations = find_good_combinations(lights, &combinations);
-
         let mut combinations_len: Vec<usize> = good_combinations.iter().map(|x| x.len()).collect();
         combinations_len.sort();
 
-        total_button_presses += combinations_len[0];
-    }
-
-    total_button_presses
+        combinations_len[0]
+    }).sum()
 }
 
 fn recursive_joltage<'a>(joltages: &Vec<i64>, combinations: &'a [Vec<Vec<usize>>], cache: &mut HashMap<Vec<i64>, Vec<&'a Vec<Vec<usize>>>>) -> i64 {
@@ -162,20 +158,13 @@ fn recursive_joltage<'a>(joltages: &Vec<i64>, combinations: &'a [Vec<Vec<usize>>
 }
 
 fn configure_joltages(manuals: &[Manual]) -> i64 {
-    let mut total_button_presses = 0;
-
-    for manual in manuals {
+    manuals.par_iter().map(|manual| {
         let buttons = &manual.buttons;
         let joltages = &manual.joltage_requirements;
-
         let combinations = get_combinations(buttons);
-
         let mut cache = HashMap::new();
-
         let button_presses = recursive_joltage(joltages, &combinations, &mut cache);
 
-        total_button_presses += button_presses;
-    }
-
-    total_button_presses
+        button_presses
+    }).sum()
 }
