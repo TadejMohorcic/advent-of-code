@@ -20,7 +20,6 @@ pub fn main() -> Result<(), Error> {
     let part_one = check_reports(&reports, false);
     let part_two = check_reports(&reports, true);
 
-    println!("");
     println!("--- Day 2: Red-Nosed Reports ---");
     println!(" - Part one solution: {}", part_one);
     println!(" - Part two solution: {}", part_two);

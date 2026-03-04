@@ -37,9 +37,7 @@ pub fn main() -> Result<(), Error> {
 }
 
 fn calculate_distance(l1: &Vec<u64>, l2: &Vec<u64>) -> u64 {
-    let distance = l1.iter().zip(l2.iter()).map(|(x, y)| x.abs_diff(*y)).fold(0, |acc, x| acc + x);
-
-    distance
+    l1.iter().zip(l2.iter()).map(|(x, y)| x.abs_diff(*y)).fold(0, |acc, x| acc + x)
 }
 
 fn get_similarity_score(l1: &Vec<u64>, l2: &Vec<u64>) -> u64 {

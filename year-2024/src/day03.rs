@@ -20,7 +20,6 @@ pub fn main() -> Result<(), Error> {
     let part_one = scan_for_multiplicators(&string_input, Regex::new(r"mul\((\d{1,3}),(\d{1,3})\)").unwrap());
     let part_two = scan_for_multiplicators(&string_input, Regex::new(r"mul\((\d{1,3}),(\d{1,3})\)|do\(\)|don't\(\)").unwrap());
 
-    println!("");
     println!("--- Day 3: Mull It Over ---");
     println!(" - Part one solution: {}", part_one);
     println!(" - Part two solution: {}", part_two);
