@@ -122,23 +122,6 @@ fn format_disk_whole(files: &mut Vec<(usize, i64)>, empty: &mut Vec<i64>) -> usi
                     empty.insert(j, 0);
                 }
             }
-
-            // if file_to_check == empty.len() - 1 {
-            //     empty[file_to_check] += file.1;
-            // }
-            // if file_to_check < empty.len() {
-            //     let merged = empty[file_to_check - 1] + file.1 + empty[file_to_check];
-            //     empty.remove(file_to_check);
-            //     empty[file_to_check - 1] = merged;
-            // } else {
-            //     empty[file_to_check - 1] += file.1;
-            // }
-            // files.remove(file_to_check);
-
-            // // destination insertion
-            // empty[j] = 0;
-            // files.insert(j + 1, file);
-            // empty.insert(j + 1, slot_size - file.1);
         }
     }
 
