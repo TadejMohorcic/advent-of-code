@@ -45,7 +45,7 @@ fn score_trail(
     position: Position,
     height: u32,
     map: &Vec<Vec<u32>>,
-    peaks_reached: &mut Option<&mut HashSet<Position>>,
+    peaks_reached: &mut HashSet<Position>,
 ) -> usize {
     let m = map.len();
     let n = map[0].len();
@@ -54,9 +54,7 @@ fn score_trail(
     let y = position.y;
 
     if height == 9 {
-        if let Some(peaks) = peaks_reached {
-            peaks.insert(Position { x: x, y: y });
-        }
+        peaks_reached.insert(Position { x: x, y: y });
         return 1;
     }
 
@@ -104,13 +102,9 @@ fn score_trailheads(map: &Vec<Vec<u32>>, part: bool) -> usize {
             .enumerate()
             .filter(|(_, x)| **x == 0)
             .map(|(col, _)| {
-                if part {
-                    score_trail(Position { x: col, y: row }, 0, map, &mut None)
-                } else {
-                    let mut peaks = HashSet::new();
-                    score_trail(Position { x: col, y: row }, 0, map, &mut Some(&mut peaks));
-                    peaks.len()
-                }
+                let mut peaks = HashSet::new();
+                let trails = score_trail(Position { x: col, y: row }, 0, map, &mut peaks);
+                if part { trails } else { peaks.len() }
             })
             .sum::<usize>();
 
