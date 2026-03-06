@@ -1,5 +1,5 @@
 use std::fs::File;
-use std::io::{BufReader, BufRead, Error};
+use std::io::{BufRead, BufReader, Error};
 
 pub fn main() -> Result<(), Error> {
     // let path = "input/day02-test.txt";
@@ -12,8 +12,12 @@ pub fn main() -> Result<(), Error> {
 
     for line in buffered.lines() {
         let line_ok = line?;
-        let report: Vec<i64> = line_ok.trim().split_whitespace().map(|x| x.parse().unwrap()).collect();
-        
+        let report: Vec<i64> = line_ok
+            .trim()
+            .split_whitespace()
+            .map(|x| x.parse().unwrap())
+            .collect();
+
         reports.push(report);
     }
 
@@ -34,16 +38,15 @@ fn check_reports(reports: &[Vec<i64>], part: bool) -> i64 {
     for report in reports {
         if is_valid(report) {
             valid_reports += 1;
-        }
-        else if part {
+        } else if part {
             let n = report.len();
 
             for i in 0..n {
-                let new_report = [&report[0..i], &report[i+1..n]].concat();
+                let new_report = [&report[0..i], &report[i + 1..n]].concat();
 
                 if is_valid(&new_report) {
                     valid_reports += 1;
-                    break
+                    break;
                 }
             }
         }
@@ -56,21 +59,20 @@ fn is_valid(report: &[i64]) -> bool {
     let n = report.len();
     let mut previous_sign: Option<bool> = None;
 
-    for i in 0..n-1 {
-        let distance = report[i] - report[i+1];
+    for i in 0..n - 1 {
+        let distance = report[i] - report[i + 1];
         let abs_distance = distance.abs();
         let sign = distance > 0;
 
         if 3 < abs_distance || abs_distance < 1 {
-            return false
+            return false;
         }
 
         if let Some(prev) = previous_sign {
             if sign != prev {
-                return false
+                return false;
             }
-        }
-        else {
+        } else {
             previous_sign = Some(sign);
         }
     }

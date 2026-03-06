@@ -1,5 +1,5 @@
 use std::fs::File;
-use std::io::{BufReader, BufRead, Error};
+use std::io::{BufRead, BufReader, Error};
 
 use regex::Regex;
 
@@ -17,8 +17,14 @@ pub fn main() -> Result<(), Error> {
         string_input.push_str(&line_ok);
     }
 
-    let part_one = scan_for_multiplicators(&string_input, Regex::new(r"mul\((\d{1,3}),(\d{1,3})\)").unwrap());
-    let part_two = scan_for_multiplicators(&string_input, Regex::new(r"mul\((\d{1,3}),(\d{1,3})\)|do\(\)|don't\(\)").unwrap());
+    let part_one = scan_for_multiplicators(
+        &string_input,
+        Regex::new(r"mul\((\d{1,3}),(\d{1,3})\)").unwrap(),
+    );
+    let part_two = scan_for_multiplicators(
+        &string_input,
+        Regex::new(r"mul\((\d{1,3}),(\d{1,3})\)|do\(\)|don't\(\)").unwrap(),
+    );
 
     println!("--- Day 3: Mull It Over ---");
     println!(" - Part one solution: {}", part_one);
@@ -42,10 +48,13 @@ fn scan_for_multiplicators(string: &String, re: Regex) -> u64 {
 
                 result += x_int * y_int;
             }
-        }
-        else {
+        } else {
             let instruction = &capture[0];
-            multiply = if instruction == "don't()" {false} else {true};
+            multiply = if instruction == "don't()" {
+                false
+            } else {
+                true
+            };
         }
     }
 

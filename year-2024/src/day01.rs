@@ -1,5 +1,5 @@
 use std::fs::File;
-use std::io::{BufReader, BufRead, Error};
+use std::io::{BufRead, BufReader, Error};
 
 use std::collections::HashMap;
 
@@ -15,7 +15,11 @@ pub fn main() -> Result<(), Error> {
 
     for line in buffered.lines() {
         let line_ok = line?;
-        let numbers: Vec<u64> = line_ok.trim().split_whitespace().map(|x| x.parse().unwrap()).collect();
+        let numbers: Vec<u64> = line_ok
+            .trim()
+            .split_whitespace()
+            .map(|x| x.parse().unwrap())
+            .collect();
 
         list_a.push(numbers[0]);
         list_b.push(numbers[1]);
@@ -37,7 +41,10 @@ pub fn main() -> Result<(), Error> {
 }
 
 fn calculate_distance(l1: &Vec<u64>, l2: &Vec<u64>) -> u64 {
-    l1.iter().zip(l2.iter()).map(|(x, y)| x.abs_diff(*y)).fold(0, |acc, x| acc + x)
+    l1.iter()
+        .zip(l2.iter())
+        .map(|(x, y)| x.abs_diff(*y))
+        .fold(0, |acc, x| acc + x)
 }
 
 fn get_similarity_score(l1: &Vec<u64>, l2: &Vec<u64>) -> u64 {
@@ -48,8 +55,7 @@ fn get_similarity_score(l1: &Vec<u64>, l2: &Vec<u64>) -> u64 {
     for number in l1 {
         if let Some(occurance) = cache.get(number) {
             similarity_score += number * occurance;
-        }
-        else {
+        } else {
             let occurance = l2.iter().filter(|x| *x == number).fold(0, |acc, _| acc + 1);
             cache.insert(*number, occurance);
 

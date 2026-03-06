@@ -1,5 +1,5 @@
 use std::fs::File;
-use std::io::{BufReader, BufRead, Error};
+use std::io::{BufRead, BufReader, Error};
 
 use std::collections::HashSet;
 
@@ -22,12 +22,16 @@ pub fn main() -> Result<(), Error> {
 
         if line_ok.is_empty() {
             current_event = PageEvent::PrintingOrder;
-            continue
+            continue;
         }
 
         match current_event {
             PageEvent::PageRules => {
-                let order: Vec<u64> = line_ok.trim().split('|').map(|x| x.parse().unwrap()).collect();
+                let order: Vec<u64> = line_ok
+                    .trim()
+                    .split('|')
+                    .map(|x| x.parse().unwrap())
+                    .collect();
 
                 for page in &order {
                     pages.insert(*page);
@@ -36,7 +40,11 @@ pub fn main() -> Result<(), Error> {
                 page_orders.push(order.clone());
             }
             PageEvent::PrintingOrder => {
-                let ordering: Vec<u64> = line_ok.trim().split(',').map(|x| x.parse().unwrap()).collect();
+                let ordering: Vec<u64> = line_ok
+                    .trim()
+                    .split(',')
+                    .map(|x| x.parse().unwrap())
+                    .collect();
                 orderings.push(ordering);
             }
         }
@@ -63,14 +71,13 @@ enum PageEvent {
 fn check_order(rules: &[Vec<u64>], pages: &[Vec<u64>], page_index: &Vec<u64>) -> (u64, u64) {
     let mut part_one = 0;
     let mut part_two = 0;
-    
+
     let adjecency_matrix = build_adj_matrix(rules, page_index);
 
     for page in pages {
         if let Some(x) = is_order_valid(page, page_index, &adjecency_matrix) {
             part_one += x;
-        }
-        else {
+        } else {
             part_two += bubble_sort(page, page_index, &adjecency_matrix);
         }
     }
@@ -93,21 +100,25 @@ fn build_adj_matrix(rules: &[Vec<u64>], page_index: &Vec<u64>) -> Vec<Vec<u32>> 
     matrix
 }
 
-fn is_order_valid(page: &Vec<u64>, page_index: &Vec<u64>, adj_matrix: &Vec<Vec<u32>>) -> Option<u64> {
+fn is_order_valid(
+    page: &Vec<u64>,
+    page_index: &Vec<u64>,
+    adj_matrix: &Vec<Vec<u32>>,
+) -> Option<u64> {
     let n = page.len();
 
-    for i in 0..n-1 {
+    for i in 0..n - 1 {
         let before = page_index.iter().position(|n| *n == page[i]).unwrap() as usize;
 
-        for j in i+1..n {
+        for j in i + 1..n {
             let after = page_index.iter().position(|n| *n == page[j]).unwrap() as usize;
-            
+
             if adj_matrix[before][after] != 1 {
-                return None
+                return None;
             }
         }
     }
-    
+
     Some(page[n / 2])
 }
 
@@ -123,19 +134,23 @@ fn bubble_sort(page: &Vec<u64>, page_index: &Vec<u64>, adj_matrix: &Vec<Vec<u32>
         let mut current_index = i;
 
         loop {
-            let current = page_index.iter().position(|n| *n == sorted_page[current_index]).unwrap() as usize;
-            let previous = page_index.iter().position(|n| *n == sorted_page[current_index - 1]).unwrap() as usize;
+            let current = page_index
+                .iter()
+                .position(|n| *n == sorted_page[current_index])
+                .unwrap() as usize;
+            let previous = page_index
+                .iter()
+                .position(|n| *n == sorted_page[current_index - 1])
+                .unwrap() as usize;
 
             if adj_matrix[previous][current] == 1 {
                 break;
-            }
-            else {
+            } else {
                 sorted_page.swap(current_index, current_index - 1);
 
                 if current_index == 1 {
                     break;
-                }
-                else {
+                } else {
                     current_index -= 1;
                 }
             }
