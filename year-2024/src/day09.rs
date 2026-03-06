@@ -95,30 +95,30 @@ fn format_disk_whole(files: &mut Vec<(usize, i64)>, empty: &mut Vec<i64>) -> usi
     let process_order: Vec<(usize, i64)> = files.iter().rev().cloned().collect();
 
     for file in process_order {
-        let file_to_check = files.iter().position(|f| f.0 == file.0).unwrap();
+        let file_pos = files.iter().position(|f| f.0 == file.0).unwrap();
 
-        let empty_space = (0..file_to_check)
+        let empty_space = (0..file_pos)
             .find(|&j| empty[j] >= file.1)
             .map(|j| (j, empty[j]));
 
         if let Some((j, _)) = empty_space {
-            if j == file_to_check - 1 {
+            if j == file_pos - 1 {
                 if !(j == empty.len() - 1) {
                     empty[j + 1] += empty[j];
                 }
                 empty[j] = 0;
             } else {
-                files.remove(file_to_check);
+                files.remove(file_pos);
                 files.insert(j + 1, file);
 
-                if file_to_check == empty.len() {
+                if file_pos == empty.len() {
                     empty[j] -= file.1;
-                    empty.remove(file_to_check - 1);
+                    empty.remove(file_pos - 1);
                     empty.insert(j, 0);
                 } else {
                     empty[j] -= file.1;
-                    empty[file_to_check] += empty[file_to_check - 1] + file.1;
-                    empty.remove(file_to_check - 1);
+                    empty[file_pos] += empty[file_pos - 1] + file.1;
+                    empty.remove(file_pos - 1);
                     empty.insert(j, 0);
                 }
             }
