@@ -58,7 +58,7 @@ pub fn main() -> Result<(), Error> {
     let part_two = solve_problems(&problems, true);
 
     println!("--- Day 13: Claw Contraption ---");
-    println!(" - Part ne solution: {}", part_one);
+    println!(" - Part one solution: {}", part_one);
     println!(" - Part two solution: {}", part_two);
     println!("");
 
