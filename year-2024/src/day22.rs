@@ -31,11 +31,11 @@ pub fn main() -> Result<(), Error> {
 
 fn next_secret_number(mut num: i64) -> i64 {
     let mut mix = num * 64;
-    num = (!num | !mix) & (num | mix) % 16777216;
+    num = (num ^ mix) % 16777216;
     mix = num / 32;
-    num = (!num | !mix) & (num | mix) % 16777216;
+    num = (num ^ mix) % 16777216;
     mix = num * 2048;
-    num = (!num | !mix) & (num | mix) % 16777216;
+    num = (num ^ mix) % 16777216;
 
     num
 }
