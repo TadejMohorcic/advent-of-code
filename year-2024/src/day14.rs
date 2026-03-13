@@ -53,7 +53,6 @@ pub fn main() -> Result<(), Error> {
     Ok(())
 }
 
-#[derive(Debug)]
 struct Robot {
     x: i64,
     y: i64,

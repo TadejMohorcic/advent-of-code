@@ -65,7 +65,6 @@ pub fn main() -> Result<(), Error> {
     Ok(())
 }
 
-#[derive(Debug)]
 struct Problem {
     a: [[i64; 2]; 2],
     y: [i64; 2],

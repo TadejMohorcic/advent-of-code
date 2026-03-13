@@ -29,7 +29,7 @@ pub fn main() -> Result<(), Error> {
     Ok(())
 }
 
-#[derive(Debug, Eq, PartialEq, Hash)]
+#[derive(Eq, PartialEq, Hash)]
 struct Position {
     row: usize,
     col: usize,

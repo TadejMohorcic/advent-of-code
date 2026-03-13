@@ -1,5 +1,4 @@
 use std::fs::File;
-use std::hash::Hash;
 use std::io::{BufRead, BufReader, Error};
 
 use std::collections::HashSet;
@@ -87,7 +86,7 @@ enum MapType {
     Instructions,
 }
 
-#[derive(Debug, Eq, PartialEq, Hash, Clone)]
+#[derive(Eq, PartialEq, Hash, Clone)]
 struct Position {
     x: i32,
     y: i32,
