@@ -1,10 +1,9 @@
 use std::fs::File;
-use std::io::{BufReader, BufRead, Error};
+use std::io::{BufRead, BufReader, Error};
 
 use std::collections::{HashMap, HashSet};
 
 pub fn main() -> Result<(), Error> {
-    // let path = "input/day08-test.txt";
     let path = "input/day08.txt";
 
     let input = File::open(path)?;
@@ -14,8 +13,16 @@ pub fn main() -> Result<(), Error> {
 
     for line in buffered.lines() {
         let line_ok = line?;
-        let p: Vec<i64> = line_ok.trim().split(',').map(|x| x.parse().unwrap()).collect();
-        let position = Position {x: p[0], y: p[1], z: p[2]};
+        let p: Vec<i64> = line_ok
+            .trim()
+            .split(',')
+            .map(|x| x.parse().unwrap())
+            .collect();
+        let position = Position {
+            x: p[0],
+            y: p[1],
+            z: p[2],
+        };
 
         junction_boxes.push(position);
     }
@@ -30,11 +37,11 @@ pub fn main() -> Result<(), Error> {
     Ok(())
 }
 
-#[derive(Debug, Clone, Copy)]
+#[derive(Clone, Copy)]
 struct Position {
     x: i64,
     y: i64,
-    z: i64
+    z: i64,
 }
 
 fn calculate_distance(p1: Position, p2: Position) -> i64 {
@@ -49,7 +56,7 @@ fn get_distances_sorted(positions: &[Position]) -> Vec<(i64, usize, usize)> {
 
     for i in 0..n {
         let p1 = positions[i];
-        for j in i+1..n {
+        for j in i + 1..n {
             let p2 = positions[j];
             let distance = calculate_distance(p1, p2);
             distances.push((distance, i, j));
@@ -84,8 +91,12 @@ fn connect_boxes(positions: &[Position], num_of_steps: usize) -> (i64, i64) {
             continue;
         }
 
-        let connected_union: HashSet<usize> = connections.get(&i).iter().flat_map(|s| s.iter().copied())
-                                        .chain(connections.get(&j).iter().flat_map(|s| s.iter().copied())).collect();
+        let connected_union: HashSet<usize> = connections
+            .get(&i)
+            .iter()
+            .flat_map(|s| s.iter().copied())
+            .chain(connections.get(&j).iter().flat_map(|s| s.iter().copied()))
+            .collect();
 
         for k in &connected_union {
             connections.insert(*k, connected_union.clone());

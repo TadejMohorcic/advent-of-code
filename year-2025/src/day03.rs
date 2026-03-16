@@ -1,8 +1,7 @@
 use std::fs::File;
-use std::io::{BufReader, BufRead, Error};
+use std::io::{BufRead, BufReader, Error};
 
 pub fn main() -> Result<(), Error> {
-    // let path = "input/day03-test.txt";
     let path = "input/day03.txt";
 
     let input = File::open(path)?;
@@ -12,7 +11,11 @@ pub fn main() -> Result<(), Error> {
 
     for line in buffered.lines() {
         let line_ok = line?;
-        let digits: Vec<u64> = line_ok.trim().chars().map(|x| x.to_digit(10).unwrap() as u64).collect();
+        let digits: Vec<u64> = line_ok
+            .trim()
+            .chars()
+            .map(|x| x.to_digit(10).unwrap() as u64)
+            .collect();
         batteries.push(digits);
     }
 
@@ -37,7 +40,10 @@ fn highest_joltage(batteries: &[Vec<u64>], capacity: usize) -> u64 {
         for (i, bat) in battery.iter().enumerate() {
             let remaining_bats = length - i - 1;
 
-            while !battery_acc.is_empty() && battery_acc[battery_acc.len() - 1] < bat && remaining_bats >= capacity - battery_acc.len() {
+            while !battery_acc.is_empty()
+                && battery_acc[battery_acc.len() - 1] < bat
+                && remaining_bats >= capacity - battery_acc.len()
+            {
                 battery_acc.pop();
             }
 

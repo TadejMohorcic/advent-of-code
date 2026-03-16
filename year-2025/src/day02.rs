@@ -1,11 +1,10 @@
 use std::fs::File;
-use std::io::{BufReader, BufRead, Error};
+use std::io::{BufRead, BufReader, Error};
 
-use std::ops::Range;
 use std::collections::HashSet;
+use std::ops::Range;
 
 pub fn main() -> Result<(), Error> {
-    // let path = "input/day02-test.txt";
     let path = "input/day02.txt";
 
     let input = File::open(path)?;
@@ -80,7 +79,7 @@ fn sum_valid_ids(ranges: &[Range<u64>], mask: &[Vec<u64>]) -> u64 {
 
     for i in 1..99_999 {
         let correct_mask = &mask[get_number_length(i) - 1];
-        
+
         for generator in correct_mask {
             let number = generator * i;
 

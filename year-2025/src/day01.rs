@@ -1,8 +1,7 @@
 use std::fs::File;
-use std::io::{self, BufReader, BufRead, Error};
+use std::io::{self, BufRead, BufReader, Error};
 
 pub fn main() -> Result<(), Error> {
-    // let path = "input/day01-test.txt";
     let path = "input/day01.txt";
 
     let input = File::open(path)?;
@@ -19,12 +18,15 @@ pub fn main() -> Result<(), Error> {
         match chars.next().unwrap() {
             'L' => direction = -1,
             'R' => direction = 1,
-            _ => unreachable!("Invalid direction!")
+            _ => unreachable!("Invalid direction!"),
         }
 
-       let rotation: i32 = chars.as_str().parse().map_err(|e| io::Error::new(io::ErrorKind::InvalidData, e))?;
+        let rotation: i32 = chars
+            .as_str()
+            .parse()
+            .map_err(|e| io::Error::new(io::ErrorKind::InvalidData, e))?;
 
-       instructions.push(rotation * direction);
+        instructions.push(rotation * direction);
     }
 
     let part_one = count_zeros(&instructions, 50);
@@ -41,7 +43,7 @@ pub fn main() -> Result<(), Error> {
 
 fn count_zeros(instructions: &[i32], mut position: i32) -> i32 {
     let mut result = 0;
-    
+
     for instruction in instructions {
         position = (position + instruction).rem_euclid(100);
 
@@ -65,11 +67,11 @@ fn passing_zero(instructions: &[i32], mut position: i32) -> i32 {
 
         if *instruction >= 0 {
             current_rotations += (position < old_position) as i32;
+        } else {
+            current_rotations +=
+                (old_position != 0 && (position > old_position || position == 0)) as i32;
         }
-        else {
-            current_rotations += (old_position != 0 && (position > old_position || position == 0)) as i32;
-        }
-        
+
         result += current_rotations;
     }
 

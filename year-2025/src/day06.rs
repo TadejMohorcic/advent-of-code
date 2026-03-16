@@ -1,8 +1,7 @@
 use std::fs::File;
-use std::io::{BufReader, BufRead, Error};
+use std::io::{BufRead, BufReader, Error};
 
 pub fn main() -> Result<(), Error> {
-    // let path = "input/day06-test.txt";
     let path = "input/day06.txt";
 
     let input = File::open(path)?;
@@ -15,21 +14,33 @@ pub fn main() -> Result<(), Error> {
     for line in buffered.lines() {
         let line_ok = line?;
 
-        let number_line: Vec<u64> = line_ok.trim().split_whitespace().filter_map(|x| x.parse().ok()).collect();
-        let number_stack: Vec<u64> = line_ok.chars().map(|x| match x {'1'..='9' => x.to_digit(10).unwrap() as u64, _ => 0}).collect();
-        
+        let number_line: Vec<u64> = line_ok
+            .trim()
+            .split_whitespace()
+            .filter_map(|x| x.parse().ok())
+            .collect();
+        let number_stack: Vec<u64> = line_ok
+            .chars()
+            .map(|x| match x {
+                '1'..='9' => x.to_digit(10).unwrap() as u64,
+                _ => 0,
+            })
+            .collect();
+
         if number_line.is_empty() {
             operations = line_ok.trim().chars().filter(|x| *x != ' ').collect();
-        }
-        else {
+        } else {
             horizontal_numbers.push(number_line);
         }
 
         if vertical_numbers.is_empty() {
             vertical_numbers = number_stack;
-        }
-        else {
-            vertical_numbers = vertical_numbers.iter().zip(number_stack.iter()).map(|(a, b)| if *b == 0 {*a} else {10 * a + b}).collect();
+        } else {
+            vertical_numbers = vertical_numbers
+                .iter()
+                .zip(number_stack.iter())
+                .map(|(a, b)| if *b == 0 { *a } else { 10 * a + b })
+                .collect();
         }
     }
 
@@ -45,11 +56,25 @@ pub fn main() -> Result<(), Error> {
 }
 
 fn calculate_top_down(numbers: Vec<Vec<u64>>, instructions: &[char]) -> u64 {
-    let mut top_down_sum: Vec<(usize, u64)> = numbers[0].iter().enumerate().map(|(x, y)| (x, *y)).collect();
+    let mut top_down_sum: Vec<(usize, u64)> = numbers[0]
+        .iter()
+        .enumerate()
+        .map(|(x, y)| (x, *y))
+        .collect();
     let n = numbers.len();
 
     for i in 1..n {
-        top_down_sum = top_down_sum.iter().zip(numbers[i].iter()).map(|((j, a), b)| if instructions[*j] == '*' {(*j, a * b)} else {(*j, a + b)}).collect();
+        top_down_sum = top_down_sum
+            .iter()
+            .zip(numbers[i].iter())
+            .map(|((j, a), b)| {
+                if instructions[*j] == '*' {
+                    (*j, a * b)
+                } else {
+                    (*j, a + b)
+                }
+            })
+            .collect();
     }
 
     top_down_sum.iter().fold(0, |acc, (_, x)| acc + x)
@@ -59,16 +84,19 @@ fn calculate_left_right(numbers: Vec<u64>, instructions: &[char]) -> u64 {
     let mut total_value = 0;
 
     let mut index = 0;
-    let mut current_value = if instructions[index] == '*' {1} else {0};
+    let mut current_value = if instructions[index] == '*' { 1 } else { 0 };
 
     for n in &numbers {
         if *n == 0 {
             total_value += current_value;
             index += 1;
-            current_value = if instructions[index] == '*' {1} else {0};
-        }
-        else {
-            current_value = if instructions[index] == '*' {current_value * n} else {current_value + n};
+            current_value = if instructions[index] == '*' { 1 } else { 0 };
+        } else {
+            current_value = if instructions[index] == '*' {
+                current_value * n
+            } else {
+                current_value + n
+            };
         }
     }
 
@@ -76,4 +104,3 @@ fn calculate_left_right(numbers: Vec<u64>, instructions: &[char]) -> u64 {
 
     total_value
 }
-

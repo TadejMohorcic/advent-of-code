@@ -1,8 +1,7 @@
 use std::fs::File;
-use std::io::{BufReader, BufRead, Error};
+use std::io::{BufRead, BufReader, Error};
 
 pub fn main() -> Result<(), Error> {
-    // let path = "input/day07-test.txt";
     let path = "input/day07.txt";
 
     let input = File::open(path)?;
@@ -13,7 +12,12 @@ pub fn main() -> Result<(), Error> {
     for line in buffered.lines() {
         let line_ok = line?;
 
-        let splitter_row: Vec<u64> = line_ok.trim().chars().enumerate().filter_map(|(i, x)| (x == '^').then_some(i as u64)).collect();
+        let splitter_row: Vec<u64> = line_ok
+            .trim()
+            .chars()
+            .enumerate()
+            .filter_map(|(i, x)| (x == '^').then_some(i as u64))
+            .collect();
 
         if !splitter_row.is_empty() {
             splitter_locations.push(splitter_row);
@@ -41,7 +45,11 @@ fn move_in_manifold(locations: &[Vec<u64>]) -> (u64, u64) {
     for i in 0..locations.len() {
         let mut new_beams = vec![0; 2 * (starting_position as usize) + 1];
 
-        let beam_ids: Vec<usize> = beams.iter().enumerate().filter_map(|(i, x)| (*x > 0).then_some(i)).collect();
+        let beam_ids: Vec<usize> = beams
+            .iter()
+            .enumerate()
+            .filter_map(|(i, x)| (*x > 0).then_some(i))
+            .collect();
 
         for b in beam_ids {
             if locations[i].contains(&(b as u64)) {
@@ -49,8 +57,7 @@ fn move_in_manifold(locations: &[Vec<u64>]) -> (u64, u64) {
                 new_beams[b + 1] += beams[b];
                 new_beams[b] = 0;
                 number_of_splits += 1;
-            }
-            else {
+            } else {
                 new_beams[b] += beams[b];
             }
         }

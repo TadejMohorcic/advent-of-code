@@ -1,10 +1,9 @@
 use std::fs::File;
-use std::io::{BufReader, BufRead, Error};
+use std::io::{BufRead, BufReader, Error};
 
-use std::collections::{HashMap};
+use std::collections::HashMap;
 
 pub fn main() -> Result<(), Error> {
-    // let path = "input/day11-test.txt";
     let path = "input/day11.txt";
 
     let input = File::open(path)?;
@@ -18,7 +17,7 @@ pub fn main() -> Result<(), Error> {
         let mut split_line = line_ok.trim().split_whitespace();
         let node = String::from(split_line.next().unwrap().trim_matches(|c| c == ':'));
         let neighbours: Vec<String> = split_line.map(|x| x.to_string()).collect();
-        
+
         graph.insert(node, neighbours);
     }
 
@@ -36,17 +35,22 @@ pub fn main() -> Result<(), Error> {
     Ok(())
 }
 
-fn traverse_graph(current_node: String, end_node: String, graph: &HashMap<String, Vec<String>>, cache: &mut HashMap<String, usize>) -> usize {
+fn traverse_graph(
+    current_node: String,
+    end_node: String,
+    graph: &HashMap<String, Vec<String>>,
+    cache: &mut HashMap<String, usize>,
+) -> usize {
     if current_node == end_node {
-        return 1
+        return 1;
     }
 
     if current_node == "out".to_string() {
-        return 0
+        return 0;
     }
 
     if let Some(&distance) = cache.get(&current_node) {
-        return distance
+        return distance;
     }
 
     let mut total_paths = 0;
@@ -58,7 +62,7 @@ fn traverse_graph(current_node: String, end_node: String, graph: &HashMap<String
     }
 
     cache.insert(current_node, total_paths);
-    
+
     total_paths
 }
 
@@ -66,9 +70,9 @@ fn must_visit(nodes: Vec<&str>, graph: &HashMap<String, Vec<String>>) -> usize {
     let mut total_paths = 1;
     let n = nodes.len();
 
-    for i in 0..n-1 {
+    for i in 0..n - 1 {
         let start = nodes[i].to_string();
-        let end = nodes[i+1].to_string();
+        let end = nodes[i + 1].to_string();
         let mut cache = HashMap::new();
 
         total_paths *= traverse_graph(start, end, graph, &mut cache);

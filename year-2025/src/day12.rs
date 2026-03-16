@@ -1,8 +1,7 @@
 use std::fs::File;
-use std::io::{BufReader, BufRead, Error};
+use std::io::{BufRead, BufReader, Error};
 
 pub fn main() -> Result<(), Error> {
-    // let path = "input/day12-test.txt";
     let path = "input/day12.txt";
 
     let input = File::open(path)?;
@@ -18,14 +17,25 @@ pub fn main() -> Result<(), Error> {
 
         match split_line {
             Some(split) => {
-                let area: u64 = split.0.split('x').map(|x| x.parse().unwrap()).fold(1, |acc, x: u64| acc * x);
-                let tiles_used: Vec<u64> = split.1.split_whitespace().map(|x| x.parse().unwrap()).collect();
-                let tile_area = tiles_used.iter().zip(tile_areas.iter()).fold(0, |acc, (x, y)| acc + x * y);
+                let area: u64 = split
+                    .0
+                    .split('x')
+                    .map(|x| x.parse().unwrap())
+                    .fold(1, |acc, x: u64| acc * x);
+                let tiles_used: Vec<u64> = split
+                    .1
+                    .split_whitespace()
+                    .map(|x| x.parse().unwrap())
+                    .collect();
+                let tile_area = tiles_used
+                    .iter()
+                    .zip(tile_areas.iter())
+                    .fold(0, |acc, (x, y)| acc + x * y);
                 if area > tile_area {
                     part_one += 1;
                 }
-            },
-            None => continue
+            }
+            None => continue,
         }
     }
 

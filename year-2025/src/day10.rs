@@ -1,5 +1,5 @@
 use std::fs::File;
-use std::io::{BufReader, BufRead, Error};
+use std::io::{BufRead, BufReader, Error};
 
 use std::collections::HashMap;
 use std::collections::hash_map::Entry;
@@ -7,7 +7,6 @@ use std::collections::hash_map::Entry;
 use rayon::prelude::*;
 
 pub fn main() -> Result<(), Error> {
-    // let path = "input/day10-test.txt";
     let path = "input/day10.txt";
 
     let input = File::open(path)?;
@@ -19,11 +18,37 @@ pub fn main() -> Result<(), Error> {
         let line_ok = line?;
         let mut split_line = line_ok.trim().split_whitespace();
 
-        let indicator_lights: Vec<i64> = split_line.next().unwrap().trim_matches(|c| c == '[' || c == ']').chars().map(|c| match c {'#' => 1, _ => 0}).collect();
-        let joltage_requirements: Vec<i64> = split_line.next_back().unwrap().trim_matches(|c| c == '{' || c == '}').split(',').map(|c| c.parse().unwrap()).collect();
-        let buttons: Vec<Vec<usize>> = split_line.map(|c| c.trim_matches(|x| x == '(' || x == ')').split(',').map(|x| x.parse().unwrap()).collect()).collect();
+        let indicator_lights: Vec<i64> = split_line
+            .next()
+            .unwrap()
+            .trim_matches(|c| c == '[' || c == ']')
+            .chars()
+            .map(|c| match c {
+                '#' => 1,
+                _ => 0,
+            })
+            .collect();
+        let joltage_requirements: Vec<i64> = split_line
+            .next_back()
+            .unwrap()
+            .trim_matches(|c| c == '{' || c == '}')
+            .split(',')
+            .map(|c| c.parse().unwrap())
+            .collect();
+        let buttons: Vec<Vec<usize>> = split_line
+            .map(|c| {
+                c.trim_matches(|x| x == '(' || x == ')')
+                    .split(',')
+                    .map(|x| x.parse().unwrap())
+                    .collect()
+            })
+            .collect();
 
-        let manual = Manual{indicator_lights: indicator_lights, buttons: buttons, joltage_requirements: joltage_requirements};
+        let manual = Manual {
+            indicator_lights: indicator_lights,
+            buttons: buttons,
+            joltage_requirements: joltage_requirements,
+        };
         manuals.push(manual);
     }
 
@@ -38,11 +63,10 @@ pub fn main() -> Result<(), Error> {
     Ok(())
 }
 
-#[derive(Debug)]
 struct Manual {
     indicator_lights: Vec<i64>,
     buttons: Vec<Vec<usize>>,
-    joltage_requirements: Vec<i64>
+    joltage_requirements: Vec<i64>,
 }
 
 fn get_combinations(buttons: &[Vec<usize>]) -> Vec<Vec<Vec<usize>>> {
@@ -61,11 +85,14 @@ fn get_combinations(buttons: &[Vec<usize>]) -> Vec<Vec<Vec<usize>>> {
 
         power_set.push(combination);
     }
-    
+
     power_set
 }
 
-fn find_good_combinations<'a>(lights: &[i64], combinations: &'a [Vec<Vec<usize>>]) -> Vec<&'a Vec<Vec<usize>>> {
+fn find_good_combinations<'a>(
+    lights: &[i64],
+    combinations: &'a [Vec<Vec<usize>>],
+) -> Vec<&'a Vec<Vec<usize>>> {
     let n = lights.len();
 
     let mut good_combinations = Vec::new();
@@ -92,24 +119,32 @@ fn find_good_combinations<'a>(lights: &[i64], combinations: &'a [Vec<Vec<usize>>
 }
 
 fn min_button_presses(manuals: &[Manual]) -> usize {
-    manuals.par_iter().map(|manual| {
-        let buttons = &manual.buttons;
-        let lights = &manual.indicator_lights;
-        let combinations = get_combinations(buttons);
-        let good_combinations = find_good_combinations(lights, &combinations);
-        let mut combinations_len: Vec<usize> = good_combinations.iter().map(|x| x.len()).collect();
-        combinations_len.sort();
+    manuals
+        .par_iter()
+        .map(|manual| {
+            let buttons = &manual.buttons;
+            let lights = &manual.indicator_lights;
+            let combinations = get_combinations(buttons);
+            let good_combinations = find_good_combinations(lights, &combinations);
+            let mut combinations_len: Vec<usize> =
+                good_combinations.iter().map(|x| x.len()).collect();
+            combinations_len.sort();
 
-        combinations_len[0]
-    }).sum()
+            combinations_len[0]
+        })
+        .sum()
 }
 
-fn recursive_joltage<'a>(joltages: &Vec<i64>, combinations: &'a [Vec<Vec<usize>>], cache: &mut HashMap<Vec<i64>, Vec<&'a Vec<Vec<usize>>>>) -> i64 {
+fn recursive_joltage<'a>(
+    joltages: &Vec<i64>,
+    combinations: &'a [Vec<Vec<usize>>],
+    cache: &mut HashMap<Vec<i64>, Vec<&'a Vec<Vec<usize>>>>,
+) -> i64 {
     let lights: Vec<i64> = joltages.iter().map(|x| x % 2).collect();
 
     if lights.iter().all(|x| *x == 0) {
         let new_joltages: Vec<i64> = joltages.iter().map(|x| x / 2).collect();
-        
+
         return 2 * recursive_joltage(&new_joltages, combinations, cache);
     }
 
@@ -141,12 +176,11 @@ fn recursive_joltage<'a>(joltages: &Vec<i64>, combinations: &'a [Vec<Vec<usize>>
 
         if new_joltages.iter().all(|x| *x == 0) {
             button_presses = combination.len() as i64;
-        }
-        else if new_joltages.iter().any(|x| *x < 0) {
+        } else if new_joltages.iter().any(|x| *x < 0) {
             button_presses = 10000;
-        }
-        else {
-            button_presses = 2 * recursive_joltage(&new_joltages, combinations, cache) + combination.len() as i64;
+        } else {
+            button_presses = 2 * recursive_joltage(&new_joltages, combinations, cache)
+                + combination.len() as i64;
         }
 
         combinations_to_consider.push(button_presses);
@@ -158,13 +192,16 @@ fn recursive_joltage<'a>(joltages: &Vec<i64>, combinations: &'a [Vec<Vec<usize>>
 }
 
 fn configure_joltages(manuals: &[Manual]) -> i64 {
-    manuals.par_iter().map(|manual| {
-        let buttons = &manual.buttons;
-        let joltages = &manual.joltage_requirements;
-        let combinations = get_combinations(buttons);
-        let mut cache = HashMap::new();
-        let button_presses = recursive_joltage(joltages, &combinations, &mut cache);
+    manuals
+        .par_iter()
+        .map(|manual| {
+            let buttons = &manual.buttons;
+            let joltages = &manual.joltage_requirements;
+            let combinations = get_combinations(buttons);
+            let mut cache = HashMap::new();
+            let button_presses = recursive_joltage(joltages, &combinations, &mut cache);
 
-        button_presses
-    }).sum()
+            button_presses
+        })
+        .sum()
 }

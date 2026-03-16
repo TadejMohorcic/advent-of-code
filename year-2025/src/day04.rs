@@ -1,11 +1,10 @@
 use std::fs::File;
-use std::io::{BufReader, BufRead, Error};
+use std::io::{BufRead, BufReader, Error};
 
 use std::collections::HashSet;
 
 pub fn main() -> Result<(), Error> {
-    // let path = "input/day04-test.txt";
-    let path = "input/day04.txt"; 
+    let path = "input/day04.txt";
 
     let input = File::open(path)?;
     let buffered = BufReader::new(input);
@@ -15,7 +14,16 @@ pub fn main() -> Result<(), Error> {
 
     for line in buffered.lines() {
         let line_ok = line?;
-        let paper_rolls: Vec<Location> = line_ok.trim().chars().enumerate().filter(|(_, x)| *x == '@').map(|(i, _)| Location {row: row as i32, column: i as i32}).collect();
+        let paper_rolls: Vec<Location> = line_ok
+            .trim()
+            .chars()
+            .enumerate()
+            .filter(|(_, x)| *x == '@')
+            .map(|(i, _)| Location {
+                row: row as i32,
+                column: i as i32,
+            })
+            .collect();
         row += 1;
 
         locations.extend(paper_rolls);
@@ -32,10 +40,10 @@ pub fn main() -> Result<(), Error> {
     Ok(())
 }
 
-#[derive(Debug, Hash, PartialEq, Eq, Clone)]
+#[derive(Hash, PartialEq, Eq, Clone)]
 struct Location {
     row: i32,
-    column: i32
+    column: i32,
 }
 
 fn is_accessible(location: &Location, locations: &HashSet<Location>) -> bool {
@@ -50,7 +58,10 @@ fn is_accessible(location: &Location, locations: &HashSet<Location>) -> bool {
                 continue;
             }
 
-            let paper_location = Location {row: row + i, column: column + j};
+            let paper_location = Location {
+                row: row + i,
+                column: column + j,
+            };
 
             if locations.contains(&paper_location) {
                 neighbours += 1;
@@ -72,8 +83,7 @@ fn remove_paper_rolls(locations: &HashSet<Location>, do_one_step: bool) -> usize
         for location in &locations_copy {
             if is_accessible(location, &locations_copy) {
                 current_removed += 1;
-            }
-            else {
+            } else {
                 new_locations.insert(location.clone());
             }
         }
