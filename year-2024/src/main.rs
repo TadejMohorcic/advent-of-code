@@ -18,6 +18,7 @@ mod day18;
 mod day19;
 mod day20;
 mod day22;
+mod day23;
 
 fn main() {
     let _ = day01::main();
@@ -40,4 +41,5 @@ fn main() {
     let _ = day19::main();
     let _ = day20::main();
     let _ = day22::main();
+    let _ = day23::main();
 }
