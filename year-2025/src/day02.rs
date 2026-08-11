@@ -1,97 +1,79 @@
-use std::fs::File;
-use std::io::{BufRead, BufReader, Error};
-
 use std::collections::HashSet;
 use std::ops::Range;
 
-pub fn main() -> Result<(), Error> {
-    let path = "input/day02.txt";
-
-    let input = File::open(path)?;
-    let buffered = BufReader::new(input);
-
+pub fn main() {
     let mut ranges = Vec::new();
 
-    for line in buffered.lines() {
-        let line_ok = line?;
-        let line_split: Vec<&str> = line_ok.trim().split(',').collect();
-
-        for line_el in line_split {
-            let r: Vec<u64> = line_el.split('-').map(|x| x.parse().unwrap()).collect();
-            ranges.push(r[0]..r[1]);
+    if let Ok(lines) = crate::read_lines("input/day02.txt") {
+        for line in lines.map_while(Result::ok) {
+            ranges.extend(line.trim().split(',').map(|part| {
+                let (start_str, end_str) = part.split_once('-').unwrap();
+                let start = start_str.parse::<u64>().unwrap();
+                let end = end_str.parse::<u64>().unwrap();
+                start..end
+            }));
         }
     }
 
-    let mask = generate_mask(5, true);
-    let mask_repeats = generate_mask(5, false);
+    let longest_num = ranges.iter().map(|x| number_len(x.end)).max().unwrap_or(0);
 
-    let part_one = sum_valid_ids(&ranges, &mask);
-    let part_two = sum_valid_ids(&ranges, &mask_repeats);
+    let part_one = valid_id_sum(&ranges, false, longest_num);
+    let part_two = valid_id_sum(&ranges, true, longest_num);
 
     println!("--- Day 2: Gift Shop ---");
     println!(" - Part one solution: {}", part_one);
     println!(" - Part two solution: {}", part_two);
     println!("");
-
-    Ok(())
 }
 
-fn get_number_length(mut n: u64) -> usize {
-    let mut length = 0;
-
-    while n > 0 {
-        let d = n % 10;
-        n = (n - d) / 10;
-        length += 1;
-    }
-
-    length
+fn number_len(n: u64) -> usize {
+    if n == 0 { 0 } else { (n.ilog10() + 1) as usize }
 }
 
-fn generate_mask(n: usize, two_repeats: bool) -> Vec<Vec<u64>> {
-    let mut masks = Vec::new();
+fn generators(n: usize, more_then_two: bool, longest_num: usize) -> Vec<Vec<u64>> {
+    let mut generators = Vec::new();
     let mut generator = 10;
 
     for i in 1..=n {
-        let mut current_masks = Vec::new();
+        let mut generators_i = Vec::new();
         let mut new_generator = generator;
 
-        while get_number_length(new_generator) < 10 {
+        while number_len(new_generator) < longest_num {
             new_generator += 1;
-            current_masks.push(new_generator);
-            new_generator *= 10_u64.pow(i as u32);
+            generators_i.push(new_generator);
 
-            if two_repeats {
+            if !more_then_two {
                 break;
             }
+
+            new_generator *= 10_u64.pow(i as u32);
         }
 
-        masks.push(current_masks);
-
+        generators.push(generators_i);
         generator *= 10;
     }
 
-    masks
+    generators
 }
 
-fn sum_valid_ids(ranges: &[Range<u64>], mask: &[Vec<u64>]) -> u64 {
-    let mut valid_ids: HashSet<u64> = HashSet::new();
+fn valid_id_sum(ranges: &[Range<u64>], more_then_two: bool, longest_num: usize) -> u64 {
+    let size_to_check = longest_num / 2;
+    let max_number = 10u64.pow(size_to_check as u32) - 1;
 
-    for i in 1..99_999 {
-        let correct_mask = &mask[get_number_length(i) - 1];
+    let generators = generators(size_to_check, more_then_two, longest_num);
+    let mut valid_ids = HashSet::new();
 
-        for generator in correct_mask {
-            let number = generator * i;
+    for i in 1..=max_number {
+        let valid_generators = &generators[number_len(i) - 1];
 
-            for range in ranges {
-                if range.contains(&number) {
-                    valid_ids.insert(number);
-                }
+        for generator in valid_generators {
+            let num = i * generator;
+
+            if ranges.iter().any(|r| r.contains(&num)) {
+                valid_ids.insert(num);
             }
         }
     }
 
-    let valid_id_sum = valid_ids.iter().fold(0, |acc, x| acc + x);
-
-    valid_id_sum
+    valid_ids.iter().fold(0, |acc, x| acc + x)
 }
