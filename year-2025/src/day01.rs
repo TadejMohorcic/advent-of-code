@@ -1,47 +1,32 @@
-use std::fs::File;
-use std::io::{self, BufRead, BufReader, Error};
-
-pub fn main() -> Result<(), Error> {
-    let path = "input/day01.txt";
-
-    let input = File::open(path)?;
-    let buffered = BufReader::new(input);
-
+pub fn main() {
     let mut instructions = Vec::new();
+    let starting_pos = 50;
 
-    for line in buffered.lines() {
-        let line_ok = line?;
-        let mut chars = line_ok.trim().chars();
+    if let Ok(lines) = crate::read_lines("input/day01.txt") {
+        for line in lines.map_while(Result::ok) {
+            let mut line = line.trim().chars();
 
-        let direction: i32;
+            let direction = if line.next().unwrap() == 'L' { -1 } else { 1 };
+            let rotation = line
+                .by_ref()
+                .take_while(|c| c.is_ascii_digit())
+                .fold(0, |acc, c| 10 * acc + c.to_digit(10).unwrap() as i64);
 
-        match chars.next().unwrap() {
-            'L' => direction = -1,
-            'R' => direction = 1,
-            _ => unreachable!("Invalid direction!"),
+            instructions.push(direction * rotation);
         }
-
-        let rotation: i32 = chars
-            .as_str()
-            .parse()
-            .map_err(|e| io::Error::new(io::ErrorKind::InvalidData, e))?;
-
-        instructions.push(rotation * direction);
     }
 
-    let part_one = count_zeros(&instructions, 50);
-    let part_two = passing_zero(&instructions, 50);
+    let part_one = land_on_zero(&instructions, starting_pos);
+    let part_two = pass_zero(&instructions, starting_pos);
 
     println!("");
     println!("--- Day 1: Secret Entrance ---");
     println!(" - Part one solution: {}", part_one);
     println!(" - Part two solution: {}", part_two);
     println!("");
-
-    Ok(())
 }
 
-fn count_zeros(instructions: &[i32], mut position: i32) -> i32 {
+fn land_on_zero(instructions: &[i64], mut position: i64) -> i64 {
     let mut result = 0;
 
     for instruction in instructions {
@@ -55,7 +40,7 @@ fn count_zeros(instructions: &[i32], mut position: i32) -> i32 {
     result
 }
 
-fn passing_zero(instructions: &[i32], mut position: i32) -> i32 {
+fn pass_zero(instructions: &[i64], mut position: i64) -> i64 {
     let mut result = 0;
 
     for instruction in instructions {
@@ -66,10 +51,10 @@ fn passing_zero(instructions: &[i32], mut position: i32) -> i32 {
         current_rotations += instruction.abs() / 100;
 
         if *instruction >= 0 {
-            current_rotations += (position < old_position) as i32;
+            current_rotations += (position < old_position) as i64;
         } else {
             current_rotations +=
-                (old_position != 0 && (position > old_position || position == 0)) as i32;
+                (old_position != 0 && (position > old_position || position == 0)) as i64;
         }
 
         result += current_rotations;
