@@ -1,33 +1,26 @@
-use std::fs::File;
-use std::io::{BufRead, BufReader, Error};
-
-pub fn main() -> Result<(), Error> {
-    let path = "input/day03.txt";
-
-    let input = File::open(path)?;
-    let buffered = BufReader::new(input);
-
+pub fn main() {
     let mut batteries = Vec::new();
+    let max_batteries_one = 2;
+    let max_batteries_two = 12;
 
-    for line in buffered.lines() {
-        let line_ok = line?;
-        let digits: Vec<u64> = line_ok
-            .trim()
-            .chars()
-            .map(|x| x.to_digit(10).unwrap() as u64)
-            .collect();
-        batteries.push(digits);
+    if let Ok(lines) = crate::read_lines("input/day03.txt") {
+        for line in lines.map_while(Result::ok) {
+            let battery: Vec<u64> = line
+                .trim()
+                .chars()
+                .map(|c| c.to_digit(10).unwrap() as u64)
+                .collect();
+            batteries.push(battery);
+        }
     }
 
-    let part_one = highest_joltage(&batteries, 2);
-    let part_two = highest_joltage(&batteries, 12);
+    let part_one = highest_joltage(&batteries, max_batteries_one);
+    let part_two = highest_joltage(&batteries, max_batteries_two);
 
     println!("--- Day 3: Lobby ---");
     println!(" - Part one solution: {}", part_one);
     println!(" - Part two solution: {}", part_two);
     println!("");
-
-    Ok(())
 }
 
 fn highest_joltage(batteries: &[Vec<u64>], capacity: usize) -> u64 {
