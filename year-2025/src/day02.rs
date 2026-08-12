@@ -15,7 +15,7 @@ pub fn main() {
         }
     }
 
-    let longest_num = ranges.iter().map(|x| number_len(x.end)).max().unwrap_or(0);
+    let longest_num = ranges.iter().map(|r| number_len(r.end)).max().unwrap_or(0);
 
     let part_one = valid_id_sum(&ranges, false, longest_num);
     let part_two = valid_id_sum(&ranges, true, longest_num);
