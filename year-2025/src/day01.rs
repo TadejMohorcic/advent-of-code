@@ -47,9 +47,8 @@ fn pass_zero(instructions: &[i64], mut position: i64) -> i64 {
 
     for instruction in instructions {
         let old_position = position;
-        let mut current_rotations = 0;
         position = (position + instruction).rem_euclid(100);
-        current_rotations += instruction.abs() / 100;
+        let mut current_rotations = instruction.abs() / 100;
 
         if *instruction >= 0 {
             current_rotations += (position < old_position) as i64;
