@@ -1,9 +1,22 @@
-pub fn main() {
-    let mut batteries = Vec::new();
-    let max_batteries_one = 2;
-    let max_batteries_two = 12;
+use std::path::Path;
 
-    if let Ok(lines) = crate::read_lines("input/day03.txt") {
+pub fn main() {
+    let batteries = parse_input("input/day03-test.txt");
+    let capacity_one = 2;
+    let capacity_two = 12;
+    let part_one = highest_joltage(&batteries, capacity_one);
+    let part_two = highest_joltage(&batteries, capacity_two);
+
+    println!("--- Day 3: Lobby ---");
+    println!(" - Part one solution: {}", part_one);
+    println!(" - Part two solution: {}", part_two);
+    println!("");
+}
+
+fn parse_input<P: AsRef<Path>>(filename: P) -> Vec<Vec<u64>> {
+    let mut batteries = Vec::new();
+
+    if let Ok(lines) = crate::read_lines(filename) {
         for line in lines.map_while(Result::ok) {
             let battery: Vec<u64> = line
                 .trim()
@@ -14,13 +27,7 @@ pub fn main() {
         }
     }
 
-    let part_one = highest_joltage(&batteries, max_batteries_one);
-    let part_two = highest_joltage(&batteries, max_batteries_two);
-
-    println!("--- Day 3: Lobby ---");
-    println!(" - Part one solution: {}", part_one);
-    println!(" - Part two solution: {}", part_two);
-    println!("");
+    batteries
 }
 
 fn highest_joltage(batteries: &[Vec<u64>], capacity: usize) -> u64 {
@@ -49,4 +56,21 @@ fn highest_joltage(batteries: &[Vec<u64>], capacity: usize) -> u64 {
     }
 
     total_joltage
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn part_one_example() {
+        let batteries = parse_input("input/day03-test.txt");
+        assert_eq!(highest_joltage(&batteries, 2), 357);
+    }
+
+    #[test]
+    fn part_two_example() {
+        let batteries = parse_input("input/day03-test.txt");
+        assert_eq!(highest_joltage(&batteries, 12), 3121910778619)
+    }
 }
