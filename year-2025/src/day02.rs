@@ -1,29 +1,33 @@
 use std::collections::HashSet;
 use std::ops::Range;
+use std::path::Path;
 
 pub fn main() {
-    let mut ranges = Vec::new();
-
-    if let Ok(lines) = crate::read_lines("input/day02.txt") {
-        for line in lines.map_while(Result::ok) {
-            ranges.extend(line.trim().split(',').map(|part| {
-                let (start_str, end_str) = part.split_once('-').unwrap();
-                let start = start_str.parse::<u64>().unwrap();
-                let end = end_str.parse::<u64>().unwrap();
-                start..end
-            }));
-        }
-    }
-
+    let ranges = parse_input("input/day02-test.txt");
     let longest_num = ranges.iter().map(|r| number_len(r.end)).max().unwrap_or(0);
-
-    let part_one = valid_id_sum(&ranges, false, longest_num);
-    let part_two = valid_id_sum(&ranges, true, longest_num);
+    let part_one = invalid_id_sum(&ranges, false, longest_num);
+    let part_two = invalid_id_sum(&ranges, true, longest_num);
 
     println!("--- Day 2: Gift Shop ---");
     println!(" - Part one solution: {}", part_one);
     println!(" - Part two solution: {}", part_two);
     println!("");
+}
+
+fn parse_input<P: AsRef<Path>>(filename: P) -> Vec<Range<u64>> {
+    let mut ranges = Vec::new();
+    if let Ok(lines) = crate::read_lines(filename) {
+        for line in lines.map_while(Result::ok) {
+            ranges.extend(line.trim().split(',').map(|part| {
+                let (start_str, end_str) = part.split_once('-').unwrap();
+                let start = start_str.parse::<u64>().unwrap();
+                let end = end_str.parse::<u64>().unwrap() + 1;
+                start..end
+            }));
+        }
+    }
+
+    ranges
 }
 
 fn number_len(n: u64) -> usize {
@@ -56,12 +60,11 @@ fn generators(n: usize, more_then_two: bool, longest_num: usize) -> Vec<Vec<u64>
     generators
 }
 
-fn valid_id_sum(ranges: &[Range<u64>], more_then_two: bool, longest_num: usize) -> u64 {
+fn invalid_id_sum(ranges: &[Range<u64>], more_then_two: bool, longest_num: usize) -> u64 {
     let size_to_check = longest_num / 2;
     let max_number = 10u64.pow(size_to_check as u32) - 1;
-
     let generators = generators(size_to_check, more_then_two, longest_num);
-    let mut valid_ids = HashSet::new();
+    let mut invalid_ids = HashSet::new();
 
     for i in 1..=max_number {
         let valid_generators = &generators[number_len(i) - 1];
@@ -70,10 +73,29 @@ fn valid_id_sum(ranges: &[Range<u64>], more_then_two: bool, longest_num: usize) 
             let num = i * generator;
 
             if ranges.iter().any(|r| r.contains(&num)) {
-                valid_ids.insert(num);
+                invalid_ids.insert(num);
             }
         }
     }
 
-    valid_ids.iter().fold(0, |acc, x| acc + x)
+    invalid_ids.iter().fold(0, |acc, x| acc + x)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn part_one_example() {
+        let ranges = parse_input("input/day02-test.txt");
+        let longest_num = ranges.iter().map(|r| number_len(r.end)).max().unwrap_or(0);
+        assert_eq!(invalid_id_sum(&ranges, false, longest_num), 1227775554);
+    }
+
+    #[test]
+    fn part_two_example() {
+        let ranges = parse_input("input/day02-test.txt");
+        let longest_num = ranges.iter().map(|r| number_len(r.end)).max().unwrap_or(0);
+        assert_eq!(invalid_id_sum(&ranges, true, longest_num), 4174379265);
+    }
 }
