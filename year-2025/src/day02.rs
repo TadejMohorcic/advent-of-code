@@ -16,6 +16,7 @@ pub fn main() {
 
 fn parse_input<P: AsRef<Path>>(filename: P) -> Vec<Range<u64>> {
     let mut ranges = Vec::new();
+
     if let Ok(lines) = crate::read_lines(filename) {
         for line in lines.map_while(Result::ok) {
             ranges.extend(line.trim().split(',').map(|part| {
