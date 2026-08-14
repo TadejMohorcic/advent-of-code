@@ -58,9 +58,9 @@ fn generate_map(towels: &HashSet<(i64, i64)>) -> HashMap<(i64, i64), Vec<(i64, i
 fn remove_paper_rolls(paper_rolls: &HashSet<(i64, i64)>, repeat: bool) -> usize {
     let paper_map = generate_map(paper_rolls);
 
-    let mut paper_map_len: HashMap<(i64, i64), i64> = paper_map
+    let mut paper_map_len: HashMap<(i64, i64), usize> = paper_map
         .iter()
-        .map(|(k, v)| (k.clone(), v.len() as i64))
+        .map(|(k, v)| (k.clone(), v.len()))
         .collect();
 
     let mut to_remove: VecDeque<(i64, i64)> = paper_map_len
