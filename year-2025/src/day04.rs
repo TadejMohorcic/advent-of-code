@@ -1,100 +1,111 @@
-use std::fs::File;
-use std::io::{BufRead, BufReader, Error};
+use std::collections::{HashMap, HashSet, VecDeque};
+use std::path::Path;
 
-use std::collections::HashSet;
-
-pub fn main() -> Result<(), Error> {
-    let path = "input/day04.txt";
-
-    let input = File::open(path)?;
-    let buffered = BufReader::new(input);
-
-    let mut locations = HashSet::new();
-    let mut row = 0;
-
-    for line in buffered.lines() {
-        let line_ok = line?;
-        let paper_rolls: Vec<Location> = line_ok
-            .trim()
-            .chars()
-            .enumerate()
-            .filter(|(_, x)| *x == '@')
-            .map(|(i, _)| Location {
-                row: row as i32,
-                column: i as i32,
-            })
-            .collect();
-        row += 1;
-
-        locations.extend(paper_rolls);
-    }
-
-    let part_one = remove_paper_rolls(&locations, true);
-    let part_two = remove_paper_rolls(&locations, false);
+pub fn main() {
+    let paper_rolls = parse_input("input/day04.txt");
+    let part_one = remove_paper_rolls(&paper_rolls, false);
+    let part_two = remove_paper_rolls(&paper_rolls, true);
 
     println!("--- Day 4: Printing Department ---");
     println!(" - Part one solution: {}", part_one);
     println!(" - Part two solution: {}", part_two);
     println!("");
-
-    Ok(())
 }
 
-#[derive(Hash, PartialEq, Eq, Clone)]
-struct Location {
-    row: i32,
-    column: i32,
-}
+fn parse_input<P: AsRef<Path>>(filename: P) -> HashSet<(i64, i64)> {
+    let mut roll_locations = HashSet::new();
+    let mut row = 0;
 
-fn is_accessible(location: &Location, locations: &HashSet<Location>) -> bool {
-    let mut neighbours = 0;
-
-    let row = location.row;
-    let column = location.column;
-
-    for i in -1..=1 {
-        for j in -1..=1 {
-            if i == 0 && j == 0 {
-                continue;
-            }
-
-            let paper_location = Location {
-                row: row + i,
-                column: column + j,
-            };
-
-            if locations.contains(&paper_location) {
-                neighbours += 1;
-            }
+    if let Ok(lines) = crate::read_lines(filename) {
+        for line in lines.map_while(Result::ok) {
+            roll_locations.extend(
+                line.trim()
+                    .chars()
+                    .enumerate()
+                    .filter_map(|(i, c)| (c == '@').then(|| (row, i as i64))),
+            );
+            row += 1;
         }
     }
 
-    neighbours < 4
+    roll_locations
 }
 
-fn remove_paper_rolls(locations: &HashSet<Location>, do_one_step: bool) -> usize {
-    let mut total_removed = 0;
-    let mut locations_copy = locations.clone();
+fn generate_map(towels: &HashSet<(i64, i64)>) -> HashMap<(i64, i64), Vec<(i64, i64)>> {
+    let mut paper_map = HashMap::new();
 
-    loop {
-        let mut new_locations = HashSet::new();
-        let mut current_removed = 0;
+    for (x, y) in towels {
+        let mut neighbours = Vec::new();
+        for dx in -1..2 {
+            for dy in -1..2 {
+                if dx == 0 && dy == 0 {
+                    continue;
+                }
 
-        for location in &locations_copy {
-            if is_accessible(location, &locations_copy) {
-                current_removed += 1;
-            } else {
-                new_locations.insert(location.clone());
+                let candidate = (x + dx, y + dy);
+                if towels.contains(&candidate) {
+                    neighbours.push(candidate);
+                }
             }
         }
 
-        locations_copy = new_locations;
-        total_removed += current_removed;
+        paper_map.insert((*x, *y), neighbours);
+    }
 
-        if do_one_step || current_removed == 0 {
-            break;
+    paper_map
+}
+
+fn remove_paper_rolls(paper_rolls: &HashSet<(i64, i64)>, repeat: bool) -> usize {
+    let paper_map = generate_map(paper_rolls);
+
+    let mut paper_map_len: HashMap<(i64, i64), i64> = paper_map
+        .iter()
+        .map(|(k, v)| (k.clone(), v.len() as i64))
+        .collect();
+
+    let mut to_remove: VecDeque<(i64, i64)> = paper_map_len
+        .iter()
+        .filter_map(|(k, v)| if *v < 4 { Some(k.clone()) } else { None })
+        .collect();
+
+    let mut total_removed = to_remove.len();
+
+    if repeat {
+        total_removed = 0;
+
+        while let Some(removed_roll) = to_remove.pop_front() {
+            total_removed += 1;
+
+            if let Some(neighbours) = paper_map.get(&removed_roll) {
+                for neighbour in neighbours {
+                    if let Some(count) = paper_map_len.get_mut(neighbour) {
+                        *count -= 1;
+
+                        if *count == 3 {
+                            to_remove.push_back(*neighbour);
+                        }
+                    }
+                }
+            }
         }
     }
 
     total_removed
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn part_one_example() {
+        let paper_rolls = parse_input("input/day04-test.txt");
+        assert_eq!(remove_paper_rolls(&paper_rolls, false), 13);
+    }
+
+    #[test]
+    fn part_two_example() {
+        let paper_rolls = parse_input("input/day04-test.txt");
+        assert_eq!(remove_paper_rolls(&paper_rolls, true), 43);
+    }
 }
