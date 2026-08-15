@@ -1,76 +1,76 @@
-use std::fs::File;
-use std::io::{BufRead, BufReader, Error};
-
 use std::cmp::max;
 use std::ops::Range;
+use std::path::Path;
 
-pub fn main() -> Result<(), Error> {
-    let path = "input/day05.txt";
-
-    let input = File::open(path)?;
-    let buffered = BufReader::new(input);
-
-    let mut ranges = Vec::new();
-    let mut ingredients = Vec::new();
-
-    for line in buffered.lines() {
-        let line_ok = line?;
-        let parsed_line: Vec<u64> = line_ok
-            .trim()
-            .split('-')
-            .filter_map(|x| x.parse().ok())
-            .collect();
-
-        match parsed_line.len() {
-            2 => ranges.push(parsed_line[0]..parsed_line[1] + 1),
-            1 => ingredients.push(parsed_line[0]),
-            _ => continue,
-        }
-    }
-
+pub fn main() {
+    let (ranges, ingredients) = parse_input("input/day05.txt");
     let merged_ranges = merge_ranges(ranges);
-
-    let part_one = count_fresh_ingredients(&ingredients, &merged_ranges);
-    let part_two = all_fresh_ingredients(&merged_ranges);
+    let part_one = count_ingredients(&ingredients, &merged_ranges, false);
+    let part_two = count_ingredients(&ingredients, &merged_ranges, true);
 
     println!("--- Day 5: Cafeteria ---");
     println!(" - Part one solution: {}", part_one);
     println!(" - Part two solution: {}", part_two);
     println!("");
-
-    Ok(())
 }
 
-fn merge_ranges(mut ranges: Vec<Range<u64>>) -> Vec<Range<u64>> {
+fn parse_input<P: AsRef<Path>>(filename: P) -> (Vec<Range<i64>>, Vec<i64>) {
+    let mut ranges = Vec::new();
+    let mut ingredients = Vec::new();
+
+    if let Ok(lines) = crate::read_lines(filename) {
+        for line in lines.map_while(Result::ok) {
+            let line: Vec<i64> = line
+                .trim()
+                .split('-')
+                .filter_map(|x| x.parse().ok())
+                .collect();
+
+            match line.as_slice() {
+                [min, max] => ranges.push(*min..*max + 1),
+                [i] => ingredients.push(*i),
+                _ => continue,
+            }
+        }
+    }
+
+    (ranges, ingredients)
+}
+
+fn merge_ranges(mut ranges: Vec<Range<i64>>) -> Vec<Range<i64>> {
     ranges.sort_by(|a, b| a.start.cmp(&b.start));
-    let mut merged_ranges: Vec<Range<u64>> = Vec::new();
+    let mut merged_ranges: Vec<Range<i64>> = Vec::new();
 
     for range in ranges {
-        let previous_range = merged_ranges.pop();
-        match previous_range {
-            Some(r) => {
-                if range.start <= r.end {
-                    merged_ranges.push(r.start..max(r.end, range.end));
-                } else {
-                    merged_ranges.push(r);
-                    merged_ranges.push(range);
-                }
+        if let Some(prev_range) = merged_ranges.pop() {
+            if range.start <= prev_range.end {
+                merged_ranges.push(prev_range.start..max(prev_range.end, range.end));
+            } else {
+                merged_ranges.push(prev_range);
+                merged_ranges.push(range);
             }
-            None => merged_ranges.push(range),
+        } else {
+            merged_ranges.push(range);
         }
     }
 
     merged_ranges
 }
 
-fn count_fresh_ingredients(ingredients: &[u64], ranges: &[Range<u64>]) -> usize {
+fn count_ingredients(ingredients: &[i64], ranges: &[Range<i64>], count_all: bool) -> i64 {
     let mut fresh_ingredients = 0;
 
-    for ingredient in ingredients {
+    if count_all {
         for range in ranges {
-            if range.contains(ingredient) {
-                fresh_ingredients += 1;
-                break;
+            fresh_ingredients += range.end - range.start;
+        }
+    } else {
+        for ingredient in ingredients {
+            for range in ranges {
+                if range.contains(ingredient) {
+                    fresh_ingredients += 1;
+                    break;
+                }
             }
         }
     }
@@ -78,13 +78,21 @@ fn count_fresh_ingredients(ingredients: &[u64], ranges: &[Range<u64>]) -> usize 
     fresh_ingredients
 }
 
-fn all_fresh_ingredients(ranges: &[Range<u64>]) -> usize {
-    let mut fresh_ingredients = 0;
+#[cfg(test)]
+mod tests {
+    use super::*;
 
-    for range in ranges {
-        let current_fresh = range.end - range.start;
-        fresh_ingredients += current_fresh as usize;
+    #[test]
+    fn part_one_example() {
+        let (ranges, ingredients) = parse_input("input/day05-test.txt");
+        let merged_ranges = merge_ranges(ranges);
+        assert_eq!(count_ingredients(&ingredients, &merged_ranges, false), 3);
     }
 
-    fresh_ingredients
+    #[test]
+    fn part_two_example() {
+        let (ranges, ingredients) = parse_input("input/day05-test.txt");
+        let merged_ranges = merge_ranges(ranges);
+        assert_eq!(count_ingredients(&ingredients, &merged_ranges, true), 14);
+    }
 }
