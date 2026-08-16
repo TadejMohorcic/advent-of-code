@@ -12,6 +12,7 @@ pub fn main() {
 
 fn parse_input<P: AsRef<Path>>(filename: P) -> Vec<Vec<i64>> {
     let mut splitters = Vec::new();
+
     if let Ok(lines) = crate::read_lines(filename) {
         for line in lines.map_while(Result::ok) {
             let row: Vec<i64> = line
