@@ -1,40 +1,14 @@
-use std::fs::File;
-use std::io::{BufRead, BufReader, Error};
-
 use std::collections::{HashMap, HashSet};
+use std::path::Path;
 
-pub fn main() -> Result<(), Error> {
-    let path = "input/day08.txt";
-
-    let input = File::open(path)?;
-    let buffered = BufReader::new(input);
-
-    let mut junction_boxes = Vec::new();
-
-    for line in buffered.lines() {
-        let line_ok = line?;
-        let p: Vec<i64> = line_ok
-            .trim()
-            .split(',')
-            .map(|x| x.parse().unwrap())
-            .collect();
-        let position = Position {
-            x: p[0],
-            y: p[1],
-            z: p[2],
-        };
-
-        junction_boxes.push(position);
-    }
-
-    let (part_one, part_two) = connect_boxes(&junction_boxes, 1000);
+pub fn main() {
+    let boxes = parse_input("input/day08.txt");
+    let (part_one, part_two) = connect_boxes(&boxes, 1000);
 
     println!("--- Day 8: Playground ---");
     println!(" - Part one solution: {}", part_one);
     println!(" - Part two solution: {}", part_two);
     println!("");
-
-    Ok(())
 }
 
 #[derive(Clone, Copy)]
@@ -44,21 +18,37 @@ struct Position {
     z: i64,
 }
 
-fn calculate_distance(p1: Position, p2: Position) -> i64 {
-    let distance = (p1.x - p2.x).pow(2) + (p1.y - p2.y).pow(2) + (p1.z - p2.z).pow(2);
+fn parse_input<P: AsRef<Path>>(filename: P) -> Vec<Position> {
+    let mut boxes = Vec::new();
 
-    distance
+    if let Ok(lines) = crate::read_lines(filename) {
+        for line in lines.map_while(Result::ok) {
+            let mut position = line.trim().split(',').map(|x| x.parse::<i64>().unwrap());
+            boxes.push(Position {
+                x: position.next().unwrap(),
+                y: position.next().unwrap(),
+                z: position.next().unwrap(),
+            })
+        }
+    }
+
+    boxes
 }
 
-fn get_distances_sorted(positions: &[Position]) -> Vec<(i64, usize, usize)> {
+fn squared_distance(p1: Position, p2: Position) -> i64 {
+    (p1.x - p2.x).pow(2) + (p1.y - p2.y).pow(2) + (p1.z - p2.z).pow(2)
+}
+
+fn get_sorted_distances(positions: &[Position]) -> Vec<(i64, usize, usize)> {
     let n = positions.len();
     let mut distances = Vec::new();
 
     for i in 0..n {
         let p1 = positions[i];
+
         for j in i + 1..n {
             let p2 = positions[j];
-            let distance = calculate_distance(p1, p2);
+            let distance = squared_distance(p1, p2);
             distances.push((distance, i, j));
         }
     }
@@ -68,12 +58,10 @@ fn get_distances_sorted(positions: &[Position]) -> Vec<(i64, usize, usize)> {
     distances
 }
 
-fn connect_boxes(positions: &[Position], num_of_steps: usize) -> (i64, i64) {
+fn connect_boxes(positions: &[Position], desired_steps: usize) -> (i64, i64) {
     let mut part_one = 1;
     let mut part_two = 1;
-
-    let ds = get_distances_sorted(positions);
-
+    let sorted_distances = get_sorted_distances(positions);
     let mut connections = HashMap::new();
 
     for (i, _) in positions.iter().enumerate() {
@@ -84,7 +72,18 @@ fn connect_boxes(positions: &[Position], num_of_steps: usize) -> (i64, i64) {
 
     let mut steps = 0;
 
-    for (_, i, j) in ds {
+    for (_, i, j) in sorted_distances {
+        if steps == desired_steps {
+            let mut groups: Vec<usize> = connections.values().map(|x| x.len()).collect();
+            groups.sort_by(|a, b| b.cmp(&a));
+            let mut index = 0;
+
+            for _ in 0..3 {
+                part_one *= groups[index] as i64;
+                index += groups[index];
+            }
+        }
+
         steps += 1;
 
         if connections[&i].contains(&j) {
@@ -103,24 +102,29 @@ fn connect_boxes(positions: &[Position], num_of_steps: usize) -> (i64, i64) {
         }
 
         if connected_union.len() == connections.len() {
-            let p1 = positions[i];
-            let p2 = positions[j];
-            part_two *= p1.x * p2.x;
+            part_two *= positions[i].x * positions[j].x;
             break;
-        }
-
-        if steps == num_of_steps {
-            let mut groups: Vec<usize> = connections.values().map(|x| x.len()).collect();
-            groups.sort_by(|a, b| b.cmp(&a));
-
-            let mut index = 0;
-
-            for _ in 0..3 {
-                part_one *= groups[index] as i64;
-                index += groups[index];
-            }
         }
     }
 
     (part_one, part_two)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn part_one_example() {
+        let boxes = parse_input("input/day08-test.txt");
+        let (part_one, _) = connect_boxes(&boxes, 10);
+        assert_eq!(part_one, 40)
+    }
+
+    #[test]
+    fn part_two_example() {
+        let boxes = parse_input("input/day08-test.txt");
+        let (_, part_two) = connect_boxes(&boxes, 10);
+        assert_eq!(part_two, 25272)
+    }
 }
