@@ -1,4 +1,3 @@
-use std::collections::{HashMap, HashSet};
 use std::path::Path;
 
 pub fn main() {
@@ -35,6 +34,47 @@ fn parse_input<P: AsRef<Path>>(filename: P) -> Vec<Position> {
     boxes
 }
 
+struct UnionFind {
+    parent: Vec<usize>,
+    size: Vec<i64>,
+    components: usize,
+}
+
+impl UnionFind {
+    fn new(n: usize) -> Self {
+        UnionFind {
+            parent: (0..n).collect(),
+            size: vec![1; n],
+            components: n,
+        }
+    }
+
+    fn find(&mut self, x: usize) -> usize {
+        if self.parent[x] != x {
+            self.parent[x] = self.find(self.parent[x]);
+        }
+        self.parent[x]
+    }
+
+    fn union(&mut self, x: usize, y: usize) -> bool {
+        let (mut parent_x, mut parent_y) = (self.find(x), self.find(y));
+
+        if parent_x == parent_y {
+            return false;
+        } else {
+            if self.size[parent_x] < self.size[parent_y] {
+                (parent_x, parent_y) = (parent_y, parent_x)
+            }
+
+            self.parent[parent_y] = parent_x;
+            self.size[parent_x] += self.size[parent_y];
+            self.components -= 1;
+
+            return true;
+        }
+    }
+}
+
 fn squared_distance(p1: Position, p2: Position) -> i64 {
     (p1.x - p2.x).pow(2) + (p1.y - p2.y).pow(2) + (p1.z - p2.z).pow(2)
 }
@@ -61,50 +101,22 @@ fn get_sorted_distances(positions: &[Position]) -> Vec<(i64, usize, usize)> {
 fn connect_boxes(positions: &[Position], desired_steps: usize) -> (i64, i64) {
     let mut part_one = 1;
     let mut part_two = 1;
-    let sorted_distances = get_sorted_distances(positions);
-    let mut connections = HashMap::new();
-
-    for (i, _) in positions.iter().enumerate() {
-        let mut connected_to = HashSet::new();
-        connected_to.insert(i);
-        connections.insert(i, connected_to);
-    }
-
     let mut steps = 0;
+    let sorted_distances = get_sorted_distances(positions);
+    let mut connected_components = UnionFind::new(positions.len());
 
     for (_, i, j) in sorted_distances {
         if steps == desired_steps {
-            let mut groups: Vec<usize> = connections.values().map(|x| x.len()).collect();
-            groups.sort_by(|a, b| b.cmp(&a));
-            let mut index = 0;
+            let mut sorted_sizes = connected_components.size.clone();
+            sorted_sizes.sort_by(|a, b| b.cmp(&a));
+            part_one *= sorted_sizes[0] * sorted_sizes[1] * sorted_sizes[2];
+        }
 
-            for _ in 0..3 {
-                part_one *= groups[index] as i64;
-                index += groups[index];
-            }
+        if connected_components.union(i, j) && connected_components.components == 1 {
+            part_two *= positions[i].x * positions[j].x;
         }
 
         steps += 1;
-
-        if connections[&i].contains(&j) {
-            continue;
-        }
-
-        let connected_union: HashSet<usize> = connections
-            .get(&i)
-            .iter()
-            .flat_map(|s| s.iter().copied())
-            .chain(connections.get(&j).iter().flat_map(|s| s.iter().copied()))
-            .collect();
-
-        for k in &connected_union {
-            connections.insert(*k, connected_union.clone());
-        }
-
-        if connected_union.len() == connections.len() {
-            part_two *= positions[i].x * positions[j].x;
-            break;
-        }
     }
 
     (part_one, part_two)
