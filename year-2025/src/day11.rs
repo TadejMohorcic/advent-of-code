@@ -1,38 +1,36 @@
-use std::fs::File;
-use std::io::{BufRead, BufReader, Error};
-
 use std::collections::HashMap;
+use std::path::Path;
 
-pub fn main() -> Result<(), Error> {
-    let path = "input/day11.txt";
-
-    let input = File::open(path)?;
-    let buffered = BufReader::new(input);
-
-    let mut graph = HashMap::new();
-
-    for line in buffered.lines() {
-        let line_ok = line?;
-
-        let mut split_line = line_ok.trim().split_whitespace();
-        let node = String::from(split_line.next().unwrap().trim_matches(|c| c == ':'));
-        let neighbours: Vec<String> = split_line.map(|x| x.to_string()).collect();
-
-        graph.insert(node, neighbours);
-    }
-
-    let mut cache_one = HashMap::new();
-    let nodes_to_visit = ["svr", "fft", "dac", "out"].to_vec();
-
-    let part_one = traverse_graph("you".to_string(), "out".to_string(), &graph, &mut cache_one);
-    let part_two = must_visit(nodes_to_visit, &graph);
+pub fn main() {
+    let graph = parse_input("input/day11.txt");
+    let start = "you".to_string();
+    let end = "out".to_string();
+    let mut cache = HashMap::new();
+    let dac_to_fft = ["svr", "dac", "fft", "out"].to_vec();
+    let fft_to_dac = ["svr", "fft", "dac", "out"].to_vec();
+    let part_one = traverse_graph(start, end, &graph, &mut cache);
+    let part_two =
+        traverse_conditional(dac_to_fft, &graph) + traverse_conditional(fft_to_dac, &graph);
 
     println!("--- Day 11: Reactor ---");
     println!(" - Part one solution: {}", part_one);
     println!(" - Part two solution: {}", part_two);
     println!("");
+}
 
-    Ok(())
+fn parse_input<P: AsRef<Path>>(filename: P) -> HashMap<String, Vec<String>> {
+    let mut graph = HashMap::new();
+
+    if let Ok(lines) = crate::read_lines(filename) {
+        for line in lines.map_while(Result::ok) {
+            let mut line = line.trim().split_whitespace();
+            let node = String::from(line.next().unwrap().trim_matches(|c| c == ':'));
+            let neighbours = line.map(|s| s.to_string()).collect();
+            graph.insert(node, neighbours);
+        }
+    }
+
+    graph
 }
 
 fn traverse_graph(
@@ -66,7 +64,7 @@ fn traverse_graph(
     total_paths
 }
 
-fn must_visit(nodes: Vec<&str>, graph: &HashMap<String, Vec<String>>) -> usize {
+fn traverse_conditional(nodes: Vec<&str>, graph: &HashMap<String, Vec<String>>) -> usize {
     let mut total_paths = 1;
     let n = nodes.len();
 
@@ -74,9 +72,33 @@ fn must_visit(nodes: Vec<&str>, graph: &HashMap<String, Vec<String>>) -> usize {
         let start = nodes[i].to_string();
         let end = nodes[i + 1].to_string();
         let mut cache = HashMap::new();
-
         total_paths *= traverse_graph(start, end, graph, &mut cache);
     }
 
     total_paths
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn part_one_example() {
+        let graph = parse_input("input/day11-test1.txt");
+        let start = "you".to_string();
+        let end = "out".to_string();
+        let mut cache: HashMap<String, usize> = HashMap::new();
+        assert_eq!(traverse_graph(start, end, &graph, &mut cache), 5)
+    }
+
+    #[test]
+    fn part_two_example() {
+        let graph = parse_input("input/day11-test2.txt");
+        let dac_to_fft = ["svr", "dac", "fft", "out"].to_vec();
+        let fft_to_dac = ["svr", "fft", "dac", "out"].to_vec();
+        assert_eq!(
+            traverse_conditional(dac_to_fft, &graph) + traverse_conditional(fft_to_dac, &graph),
+            2
+        )
+    }
 }
