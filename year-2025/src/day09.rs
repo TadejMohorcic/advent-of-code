@@ -1,52 +1,16 @@
-use std::fs::File;
-use std::io::{BufRead, BufReader, Error};
-
+use rustc_hash::FxHashMap;
 use std::cmp::{max, min};
-use std::collections::hash_map::Entry;
-use std::collections::{HashMap, HashSet};
+use std::collections::HashSet;
+use std::path::Path;
 
-pub fn main() -> Result<(), Error> {
-    let path = "input/day09.txt";
-
-    let input = File::open(path)?;
-    let buffered = BufReader::new(input);
-
-    let mut points = Vec::new();
-
-    let mut x_coords = HashSet::new();
-    let mut y_coords = HashSet::new();
-
-    for line in buffered.lines() {
-        let line_ok = line?;
-        let p: Vec<i64> = line_ok
-            .trim()
-            .split(',')
-            .map(|x| x.parse().unwrap())
-            .collect();
-
-        x_coords.insert(p[0]);
-        y_coords.insert(p[1]);
-
-        let point = Position { x: p[0], y: p[1] };
-
-        points.push(point);
-    }
-
-    let mut sorted_x: Vec<i64> = x_coords.iter().map(|x| *x).collect();
-    let mut sorted_y: Vec<i64> = y_coords.iter().map(|x| *x).collect();
-
-    sorted_x.sort();
-    sorted_y.sort();
-
-    let part_one = largest_area(&points);
-    let part_two = largest_valid_area(&points, &sorted_x, &sorted_y);
+pub fn main() {
+    let (points, sx, sy) = parse_input("input/day09.txt");
+    let (part_one, part_two) = find_largest_area(&points, &sx, &sy);
 
     println!("--- Day 9: Movie Theater ---");
     println!(" - Part one solution: {}", part_one);
     println!(" - Part two solution: {}", part_two);
     println!("");
-
-    Ok(())
 }
 
 #[derive(Clone, Copy, PartialEq, Eq, Hash)]
@@ -55,45 +19,48 @@ struct Position {
     y: i64,
 }
 
-fn calculate_area(p1: Position, p2: Position) -> i64 {
-    let area = ((p1.x - p2.x).abs() + 1) * ((p1.y - p2.y).abs() + 1);
-    area
-}
+fn parse_input<P: AsRef<Path>>(filename: P) -> (Vec<Position>, Vec<i64>, Vec<i64>) {
+    let mut points = Vec::new();
+    let mut x_coordinates = HashSet::new();
+    let mut y_coordinates = HashSet::new();
 
-fn largest_area(points: &[Position]) -> i64 {
-    let mut largest_area = 0;
-
-    let n = points.len();
-
-    for i in 0..n {
-        let p1 = points[i];
-
-        for j in i + 1..n {
-            let p2 = points[j];
-
-            let area = calculate_area(p1, p2);
-            largest_area = max(area, largest_area);
+    if let Ok(lines) = crate::read_lines(filename) {
+        for line in lines.map_while(Result::ok) {
+            let mut line = line.trim().split(',').map(|x| x.parse::<i64>().unwrap());
+            let x = line.next().unwrap();
+            let y = line.next().unwrap();
+            points.push(Position { x: x, y: y });
+            x_coordinates.insert(x);
+            y_coordinates.insert(y);
         }
     }
 
-    largest_area
+    let mut sorted_x: Vec<i64> = x_coordinates.iter().map(|x| *x).collect();
+    sorted_x.sort();
+    let mut sorted_y: Vec<i64> = y_coordinates.iter().map(|x| *x).collect();
+    sorted_y.sort();
+
+    (points, sorted_x, sorted_y)
+}
+
+fn calculate_area(p1: Position, p2: Position) -> i64 {
+    ((p1.x - p2.x).abs() + 1) * ((p1.y - p2.y).abs() + 1)
 }
 
 fn coordinate_compression(
     points: &[Position],
-    x_coords: &Vec<i64>,
-    y_coords: &Vec<i64>,
+    x_coords: &[i64],
+    y_coords: &[i64],
 ) -> Vec<Position> {
-    let mut new_positions = Vec::new();
+    let mut compressed_points = Vec::new();
 
     for point in points {
         let new_x = x_coords.iter().position(|n| *n == point.x).unwrap() as i64;
         let new_y = y_coords.iter().position(|n| *n == point.y).unwrap() as i64;
-
-        new_positions.push(Position { x: new_x, y: new_y })
+        compressed_points.push(Position { x: new_x, y: new_y })
     }
 
-    new_positions
+    compressed_points
 }
 
 fn is_on_boundary(p: Position, points: &[Position]) -> bool {
@@ -135,14 +102,14 @@ fn is_inside(p: Position, points: &[Position]) -> bool {
         let p1 = points[i];
         let p2 = points[(i + 1) % n];
 
-        if p1.x != p2.x {
+        if p1.x != p2.x || p.x >= p1.x {
             continue;
         }
 
         let bottom = min(p1.y, p2.y);
         let top = max(p1.y, p2.y);
 
-        if p.x < p1.x && bottom <= p.y && p.y < top {
+        if bottom <= p.y && p.y < top {
             count += 1;
         }
     }
@@ -150,63 +117,39 @@ fn is_inside(p: Position, points: &[Position]) -> bool {
     count % 2 == 1
 }
 
+fn cached_inside(
+    pos: Position,
+    points: &[Position],
+    cache: &mut FxHashMap<Position, bool>,
+) -> bool {
+    *cache.entry(pos).or_insert_with(|| is_inside(pos, points))
+}
+
 fn is_valid_rectangle(
     p1: Position,
     p2: Position,
     points: &[Position],
-    cache: &mut HashMap<Position, bool>,
+    cache: &mut FxHashMap<Position, bool>,
 ) -> bool {
-    let min_x = min(p1.x, p2.x);
-    let max_x = max(p1.x, p2.x);
-    let min_y = min(p1.y, p2.y);
-    let max_y = max(p1.y, p2.y);
+    let left = min(p1.x, p2.x);
+    let right = max(p1.x, p2.x);
+    let bottom = min(p1.y, p2.y);
+    let top = max(p1.y, p2.y);
 
-    for i in min_x..=max_x {
-        let p1 = Position { x: i, y: min_y };
-        let p2 = Position { x: i, y: max_y };
+    for i in left..=right {
+        let p1 = Position { x: i, y: bottom };
+        let p2 = Position { x: i, y: top };
 
-        let p1_inside = match cache.entry(p1) {
-            Entry::Occupied(e) => e.get().clone(),
-            Entry::Vacant(e) => {
-                let inside = is_inside(*e.key(), points);
-                e.insert(inside).clone()
-            }
-        };
-
-        let p2_inside = match cache.entry(p2) {
-            Entry::Occupied(e) => e.get().clone(),
-            Entry::Vacant(e) => {
-                let inside = is_inside(*e.key(), points);
-                e.insert(inside).clone()
-            }
-        };
-
-        if !p1_inside || !p2_inside {
+        if !cached_inside(p1, points, cache) || !cached_inside(p2, points, cache) {
             return false;
         }
     }
 
-    for i in min_y..=max_y {
-        let p1 = Position { x: min_x, y: i };
-        let p2 = Position { x: max_x, y: i };
+    for i in bottom..=top {
+        let p1 = Position { x: left, y: i };
+        let p2 = Position { x: right, y: i };
 
-        let p1_inside = match cache.entry(p1) {
-            Entry::Occupied(e) => e.get().clone(),
-            Entry::Vacant(e) => {
-                let inside = is_inside(*e.key(), points);
-                e.insert(inside).clone()
-            }
-        };
-
-        let p2_inside = match cache.entry(p2) {
-            Entry::Occupied(e) => e.get().clone(),
-            Entry::Vacant(e) => {
-                let inside = is_inside(*e.key(), points);
-                e.insert(inside).clone()
-            }
-        };
-
-        if !p1_inside || !p2_inside {
+        if !cached_inside(p1, points, cache) || !cached_inside(p2, points, cache) {
             return false;
         }
     }
@@ -214,12 +157,11 @@ fn is_valid_rectangle(
     true
 }
 
-fn largest_valid_area(points: &[Position], x_coords: &Vec<i64>, y_coords: &Vec<i64>) -> i64 {
+fn find_largest_area(points: &[Position], x_coords: &Vec<i64>, y_coords: &Vec<i64>) -> (i64, i64) {
     let mut largest_area = 0;
-
+    let mut largest_valid_area = 0;
     let compressed_points = coordinate_compression(points, x_coords, y_coords);
-    let mut cache = HashMap::new();
-
+    let mut cache = FxHashMap::default();
     let n = compressed_points.len();
 
     for i in 0..n {
@@ -243,11 +185,36 @@ fn largest_valid_area(points: &[Position], x_coords: &Vec<i64>, y_coords: &Vec<i
 
             let area = calculate_area(real_p1, real_p2);
 
-            if area > largest_area && is_valid_rectangle(p1, p2, &compressed_points, &mut cache) {
+            if area > largest_area {
                 largest_area = area;
+            }
+
+            if area > largest_valid_area
+                && is_valid_rectangle(p1, p2, &compressed_points, &mut cache)
+            {
+                largest_valid_area = area;
             }
         }
     }
 
-    largest_area
+    (largest_area, largest_valid_area)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn part_one_example() {
+        let (points, sx, sy) = parse_input("input/day09-test.txt");
+        let (part_one, _) = find_largest_area(&points, &sx, &sy);
+        assert_eq!(part_one, 50)
+    }
+
+    #[test]
+    fn part_two_example() {
+        let (points, sx, sy) = parse_input("input/day09-test.txt");
+        let (_, part_two) = find_largest_area(&points, &sx, &sy);
+        assert_eq!(part_two, 24)
+    }
 }
