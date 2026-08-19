@@ -95,8 +95,8 @@ fn is_inside(p: Position, points: &[Position]) -> bool {
         return true;
     }
 
-    let mut count = 0;
     let n = points.len();
+    let mut count = 0;
 
     for i in 0..n {
         let p1 = points[i];
