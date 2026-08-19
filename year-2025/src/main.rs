@@ -24,7 +24,7 @@ fn main() {
     let _ = day06::main();
     day07::main();
     day08::main();
-    let _ = day09::main();
+    day09::main();
     let _ = day10::main();
     day11::main();
     let _ = day12::main();
