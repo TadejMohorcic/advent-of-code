@@ -9,8 +9,7 @@ pub fn main() {
 
     println!("--- Day 9: Movie Theater ---");
     println!(" - Part one solution: {}", part_one);
-    println!(" - Part two solution: {}", part_two);
-    println!("");
+    println!(" - Part two solution: {}\n", part_two);
 }
 
 #[derive(Clone, Copy, PartialEq, Eq, Hash)]
@@ -35,9 +34,9 @@ fn parse_input<P: AsRef<Path>>(filename: P) -> (Vec<Position>, Vec<i64>, Vec<i64
         }
     }
 
-    let mut sorted_x: Vec<i64> = x_coordinates.iter().map(|x| *x).collect();
+    let mut sorted_x: Vec<i64> = x_coordinates.iter().copied().collect();
     sorted_x.sort();
-    let mut sorted_y: Vec<i64> = y_coordinates.iter().map(|x| *x).collect();
+    let mut sorted_y: Vec<i64> = y_coordinates.iter().copied().collect();
     sorted_y.sort();
 
     (points, sorted_x, sorted_y)
@@ -157,7 +156,7 @@ fn is_valid_rectangle(
     true
 }
 
-fn find_largest_area(points: &[Position], x_coords: &Vec<i64>, y_coords: &Vec<i64>) -> (i64, i64) {
+fn find_largest_area(points: &[Position], x_coords: &[i64], y_coords: &[i64]) -> (i64, i64) {
     let mut largest_area = 0;
     let mut largest_valid_area = 0;
     let compressed_points = coordinate_compression(points, x_coords, y_coords);
