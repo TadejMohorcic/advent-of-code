@@ -14,8 +14,7 @@ pub fn main() {
 
     println!("--- Day 11: Reactor ---");
     println!(" - Part one solution: {}", part_one);
-    println!(" - Part two solution: {}", part_two);
-    println!("");
+    println!(" - Part two solution: {}\n", part_two);
 }
 
 fn parse_input<P: AsRef<Path>>(filename: P) -> HashMap<String, Vec<String>> {
@@ -23,7 +22,7 @@ fn parse_input<P: AsRef<Path>>(filename: P) -> HashMap<String, Vec<String>> {
 
     if let Ok(lines) = crate::read_lines(filename) {
         for line in lines.map_while(Result::ok) {
-            let mut line = line.trim().split_whitespace();
+            let mut line = line.split_whitespace();
             let node = String::from(line.next().unwrap().trim_matches(|c| c == ':'));
             let neighbours = line.map(|s| s.to_string()).collect();
             graph.insert(node, neighbours);
@@ -43,7 +42,7 @@ fn traverse_graph(
         return 1;
     }
 
-    if current_node == "out".to_string() {
+    if current_node == "out" {
         return 0;
     }
 
