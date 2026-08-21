@@ -6,8 +6,7 @@ pub fn main() {
 
     println!("--- Day 8: Playground ---");
     println!(" - Part one solution: {}", part_one);
-    println!(" - Part two solution: {}", part_two);
-    println!("");
+    println!(" - Part two solution: {}\n", part_two);
 }
 
 #[derive(Clone, Copy)]
@@ -60,7 +59,7 @@ impl UnionFind {
         let (mut parent_x, mut parent_y) = (self.find(x), self.find(y));
 
         if parent_x == parent_y {
-            return false;
+            false
         } else {
             if self.size[parent_x] < self.size[parent_y] {
                 (parent_x, parent_y) = (parent_y, parent_x)
@@ -70,7 +69,7 @@ impl UnionFind {
             self.size[parent_x] += self.size[parent_y];
             self.components -= 1;
 
-            return true;
+            true
         }
     }
 }
@@ -86,7 +85,7 @@ fn get_sorted_distances(positions: &[Position]) -> Vec<(i64, usize, usize)> {
     for i in 0..n {
         let p1 = positions[i];
 
-        for j in i + 1..n {
+        for (j, _) in positions.iter().enumerate().take(n).skip(i + 1) {
             let p2 = positions[j];
             let distance = squared_distance(p1, p2);
             distances.push((distance, i, j));
@@ -101,22 +100,19 @@ fn get_sorted_distances(positions: &[Position]) -> Vec<(i64, usize, usize)> {
 fn connect_boxes(positions: &[Position], desired_steps: usize) -> (i64, i64) {
     let mut part_one = 1;
     let mut part_two = 1;
-    let mut steps = 0;
     let sorted_distances = get_sorted_distances(positions);
     let mut connected_components = UnionFind::new(positions.len());
 
-    for (_, i, j) in sorted_distances {
+    for (steps, (_, i, j)) in sorted_distances.into_iter().enumerate() {
         if steps == desired_steps {
             let mut sorted_sizes = connected_components.size.clone();
-            sorted_sizes.sort_by(|a, b| b.cmp(&a));
+            sorted_sizes.sort_by(|a, b| b.cmp(a));
             part_one *= sorted_sizes[0] * sorted_sizes[1] * sorted_sizes[2];
         }
 
         if connected_components.union(i, j) && connected_components.components == 1 {
             part_two *= positions[i].x * positions[j].x;
         }
-
-        steps += 1;
     }
 
     (part_one, part_two)
