@@ -6,8 +6,7 @@ pub fn main() {
 
     println!("--- Day 7: Laboratories ---");
     println!(" - Part one solution: {}", part_one);
-    println!(" - Part two solution: {}", part_two);
-    println!("");
+    println!(" - Part two solution: {}\n", part_two);
 }
 
 fn parse_input<P: AsRef<Path>>(filename: P) -> Vec<Vec<i64>> {
@@ -37,7 +36,7 @@ fn move_down_the_manifold(locations: &[Vec<i64>]) -> (i64, i64) {
     let mut beams = vec![0; 2 * (starting_pos as usize) + 1];
     beams[starting_pos as usize] = 1;
 
-    for i in 0..locations.len() {
+    for loc in locations {
         let mut new_beams = vec![0; 2 * (starting_pos as usize) + 1];
         let beam_ids: Vec<usize> = beams
             .iter()
@@ -46,7 +45,7 @@ fn move_down_the_manifold(locations: &[Vec<i64>]) -> (i64, i64) {
             .collect();
 
         for b in beam_ids {
-            if locations[i].contains(&(b as i64)) {
+            if loc.contains(&(b as i64)) {
                 new_beams[b - 1] += beams[b];
                 new_beams[b + 1] += beams[b];
                 new_beams[b] = 0;
@@ -59,7 +58,7 @@ fn move_down_the_manifold(locations: &[Vec<i64>]) -> (i64, i64) {
         beams = new_beams;
     }
 
-    (splits, beams.iter().fold(0, |acc, x| acc + x))
+    (splits, beams.iter().sum())
 }
 
 #[cfg(test)]
