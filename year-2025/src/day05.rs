@@ -10,8 +10,7 @@ pub fn main() {
 
     println!("--- Day 5: Cafeteria ---");
     println!(" - Part one solution: {}", part_one);
-    println!(" - Part two solution: {}", part_two);
-    println!("");
+    println!(" - Part two solution: {}\n", part_two);
 }
 
 fn parse_input<P: AsRef<Path>>(filename: P) -> (Vec<Range<i64>>, Vec<i64>) {
@@ -38,7 +37,7 @@ fn parse_input<P: AsRef<Path>>(filename: P) -> (Vec<Range<i64>>, Vec<i64>) {
 }
 
 fn merge_ranges(mut ranges: Vec<Range<i64>>) -> Vec<Range<i64>> {
-    ranges.sort_by(|a, b| a.start.cmp(&b.start));
+    ranges.sort_by_key(|a| a.start);
     let mut merged_ranges: Vec<Range<i64>> = Vec::new();
 
     for range in ranges {
