@@ -9,8 +9,7 @@ pub fn main() {
 
     println!("--- Day 3: Lobby ---");
     println!(" - Part one solution: {}", part_one);
-    println!(" - Part two solution: {}", part_two);
-    println!("");
+    println!(" - Part two solution: {}\n", part_two);
 }
 
 fn parse_input<P: AsRef<Path>>(filename: P) -> Vec<Vec<u64>> {
