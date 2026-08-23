@@ -8,8 +8,7 @@ pub fn main() {
 
     println!("--- Day 4: Printing Department ---");
     println!(" - Part one solution: {}", part_one);
-    println!(" - Part two solution: {}", part_two);
-    println!("");
+    println!(" - Part two solution: {}\n", part_two);
 }
 
 fn parse_input<P: AsRef<Path>>(filename: P) -> HashSet<(i64, i64)> {
@@ -22,7 +21,7 @@ fn parse_input<P: AsRef<Path>>(filename: P) -> HashSet<(i64, i64)> {
                 line.trim()
                     .chars()
                     .enumerate()
-                    .filter_map(|(i, c)| (c == '@').then(|| (row, i as i64))),
+                    .filter_map(|(i, c)| (c == '@').then_some((row, i as i64))),
             );
             row += 1;
         }
@@ -60,12 +59,12 @@ fn remove_paper_rolls(paper_rolls: &HashSet<(i64, i64)>, repeat: bool) -> usize 
 
     let mut neighbour_count: HashMap<(i64, i64), usize> = paper_map
         .iter()
-        .map(|(k, v)| (k.clone(), v.len()))
+        .map(|(k, v)| (*k, v.len()))
         .collect();
 
     let mut to_remove: VecDeque<(i64, i64)> = neighbour_count
         .iter()
-        .filter_map(|(k, v)| if *v < 4 { Some(k.clone()) } else { None })
+        .filter_map(|(k, v)| if *v < 4 { Some(*k) } else { None })
         .collect();
 
     let mut total_removed = to_remove.len();
