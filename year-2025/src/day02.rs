@@ -10,8 +10,7 @@ pub fn main() {
 
     println!("--- Day 2: Gift Shop ---");
     println!(" - Part one solution: {}", part_one);
-    println!(" - Part two solution: {}", part_two);
-    println!("");
+    println!(" - Part two solution: {}\n", part_two);
 }
 
 fn parse_input<P: AsRef<Path>>(filename: P) -> Vec<Range<u64>> {
@@ -79,7 +78,7 @@ fn invalid_id_sum(ranges: &[Range<u64>], more_then_two: bool, longest_num: usize
         }
     }
 
-    invalid_ids.iter().fold(0, |acc, x| acc + x)
+    invalid_ids.iter().sum()
 }
 
 #[cfg(test)]
