@@ -1,106 +1,111 @@
-use std::fs::File;
-use std::io::{BufRead, BufReader, Error};
+use std::path::Path;
 
-pub fn main() -> Result<(), Error> {
-    let path = "input/day06.txt";
+pub fn main() {
+    let (hn, vn, ops) = parse_input("input/day06.txt");
+    let part_one = calculate_horizontal(&hn, &ops);
+    let part_two = calculate_vertical(&vn, &ops);
 
-    let input = File::open(path)?;
-    let buffered = BufReader::new(input);
+    println!("--- Day 6: Trash Compactor ---");
+    println!(" - Part one solution: {}", part_one);
+    println!(" - Part two solution: {}\n", part_two);
+}
 
+fn parse_input<P: AsRef<Path>>(filename: P) -> (Vec<Vec<i64>>, Vec<i64>, Vec<char>) {
     let mut operations = Vec::new();
     let mut horizontal_numbers = Vec::new();
     let mut vertical_numbers = Vec::new();
 
-    for line in buffered.lines() {
-        let line_ok = line?;
-
-        let number_line: Vec<u64> = line_ok
-            .trim()
-            .split_whitespace()
-            .filter_map(|x| x.parse().ok())
-            .collect();
-        let number_stack: Vec<u64> = line_ok
-            .chars()
-            .map(|x| match x {
-                '1'..='9' => x.to_digit(10).unwrap() as u64,
-                _ => 0,
-            })
-            .collect();
-
-        if number_line.is_empty() {
-            operations = line_ok.trim().chars().filter(|x| *x != ' ').collect();
-        } else {
-            horizontal_numbers.push(number_line);
-        }
-
-        if vertical_numbers.is_empty() {
-            vertical_numbers = number_stack;
-        } else {
-            vertical_numbers = vertical_numbers
-                .iter()
-                .zip(number_stack.iter())
-                .map(|(a, b)| if *b == 0 { *a } else { 10 * a + b })
+    if let Ok(lines) = crate::read_lines(filename) {
+        for line in lines.map_while(Result::ok) {
+            let number_line: Vec<i64> = line
+                .split_whitespace()
+                .filter_map(|n| n.parse().ok())
                 .collect();
+            let mut number_stack: Vec<i64> = line
+                .chars()
+                .map(|x| match x {
+                    '1'..='9' => x.to_digit(10).unwrap() as i64,
+                    _ => 0,
+                })
+                .collect();
+
+            if number_line.is_empty() {
+                operations = line
+                    .split_whitespace()
+                    .map(|c| c.chars().next().unwrap())
+                    .collect();
+            } else {
+                horizontal_numbers.push(number_line);
+            }
+
+            if vertical_numbers.is_empty() {
+                vertical_numbers = number_stack;
+            } else {
+                let desired_len = number_stack.len().max(vertical_numbers.len());
+
+                number_stack.resize(desired_len, 0);
+                vertical_numbers.resize(desired_len, 0);
+
+                vertical_numbers = vertical_numbers
+                    .iter()
+                    .zip(number_stack.iter())
+                    .map(|(a, b)| if *b == 0 { *a } else { 10 * a + b })
+                    .collect();
+
+                if vertical_numbers.len() != number_stack.len() {
+                    vertical_numbers.extend(&number_stack[vertical_numbers.len()..])
+                }
+            }
         }
     }
 
-    let part_one = calculate_top_down(horizontal_numbers, &operations);
-    let part_two = calculate_left_right(vertical_numbers, &operations);
-
-    println!("--- Day 6: Trash Compactor ---");
-    println!(" - Part one solution: {}", part_one);
-    println!(" - Part two solution: {}", part_two);
-    println!("");
-
-    Ok(())
+    (horizontal_numbers, vertical_numbers, operations)
 }
 
-fn calculate_top_down(numbers: Vec<Vec<u64>>, instructions: &[char]) -> u64 {
-    let mut top_down_sum: Vec<(usize, u64)> = numbers[0]
-        .iter()
-        .enumerate()
-        .map(|(x, y)| (x, *y))
-        .collect();
+fn calculate_horizontal(numbers: &[Vec<i64>], operations: &[char]) -> i64 {
+    let mut horizontal_operations = numbers[0].clone();
     let n = numbers.len();
 
-    for i in 1..n {
-        top_down_sum = top_down_sum
-            .iter()
-            .zip(numbers[i].iter())
-            .map(|((j, a), b)| {
-                if instructions[*j] == '*' {
-                    (*j, a * b)
-                } else {
-                    (*j, a + b)
-                }
-            })
-            .collect();
-    }
-
-    top_down_sum.iter().fold(0, |acc, (_, x)| acc + x)
-}
-
-fn calculate_left_right(numbers: Vec<u64>, instructions: &[char]) -> u64 {
-    let mut total_value = 0;
-
-    let mut index = 0;
-    let mut current_value = if instructions[index] == '*' { 1 } else { 0 };
-
-    for n in &numbers {
-        if *n == 0 {
-            total_value += current_value;
-            index += 1;
-            current_value = if instructions[index] == '*' { 1 } else { 0 };
-        } else {
-            current_value = if instructions[index] == '*' {
-                current_value * n
+    for number_line in numbers.iter().take(n).skip(1) {
+        for (j, num) in number_line.iter().enumerate() {
+            if operations[j] == '*' {
+                horizontal_operations[j] *= num;
             } else {
-                current_value + n
-            };
+                horizontal_operations[j] += num;
+            }
         }
     }
 
-    total_value += current_value;
+    horizontal_operations.iter().sum()
+}
 
-    total_value
+fn calculate_vertical(numbers: &[i64], operations: &[char]) -> i64 {
+    let vertical_operations: Vec<i64> = numbers
+        .split(|&n| n == 0)
+        .zip(operations.iter())
+        .map(|(nums, op)| {
+            nums.iter().fold(if *op == '*' { 1 } else { 0 }, |acc, x| {
+                if *op == '*' { acc * x } else { acc + x }
+            })
+        })
+        .collect();
+
+    vertical_operations.iter().sum()
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn part_one_example() {
+        let (hn, _, ops) = parse_input("input/day06-test.txt");
+        assert_eq!(calculate_horizontal(&hn, &ops), 4277556);
+    }
+
+    #[test]
+    fn part_two_example() {
+        let (_, vn, ops) = parse_input("input/day06-test.txt");
+        assert_eq!(calculate_vertical(&vn, &ops), 3263827);
+    }
 }
