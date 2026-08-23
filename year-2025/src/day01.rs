@@ -6,11 +6,9 @@ pub fn main() {
     let part_one = land_on_zero(&instructions, starting_pos);
     let part_two = pass_zero(&instructions, starting_pos);
 
-    println!("");
-    println!("--- Day 1: Secret Entrance ---");
+    println!("\n--- Day 1: Secret Entrance ---");
     println!(" - Part one solution: {}", part_one);
-    println!(" - Part two solution: {}", part_two);
-    println!("");
+    println!(" - Part two solution: {}\n", part_two);
 }
 
 fn parse_input<P: AsRef<Path>>(filename: P) -> Vec<i64> {
