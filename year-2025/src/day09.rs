@@ -28,7 +28,7 @@ fn parse_input<P: AsRef<Path>>(filename: P) -> (Vec<Position>, Vec<i64>, Vec<i64
             let mut line = line.trim().split(',').map(|x| x.parse::<i64>().unwrap());
             let x = line.next().unwrap();
             let y = line.next().unwrap();
-            points.push(Position { x: x, y: y });
+            points.push(Position { x, y });
             x_coordinates.insert(x);
             y_coordinates.insert(y);
         }
