@@ -1,3 +1,7 @@
+use std::fs::File;
+use std::io::{self, BufRead};
+use std::path::Path;
+
 mod day01;
 mod day02;
 mod day03;
@@ -44,4 +48,12 @@ fn main() {
     let _ = day22::main();
     let _ = day23::main();
     let _ = day24::main();
+}
+
+fn read_lines<P>(filename: P) -> io::Result<io::Lines<io::BufReader<File>>>
+where
+    P: AsRef<Path>,
+{
+    let file = File::open(filename)?;
+    Ok(io::BufReader::new(file).lines())
 }
