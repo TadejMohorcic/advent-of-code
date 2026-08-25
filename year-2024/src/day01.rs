@@ -1,62 +1,54 @@
-use std::fs::File;
-use std::io::{BufRead, BufReader, Error};
-
 use std::collections::HashMap;
+use std::path::Path;
 
-pub fn main() -> Result<(), Error> {
-    // let path = "input/day01-test.txt";
-    let path = "input/day01.txt";
+pub fn main() {
+    let (left, right) = parse_input("input/day01.txt");
+    let part_one = get_distance(&left, &right);
+    let part_two = get_similarity_score(&left, &right);
 
-    let input = File::open(path)?;
-    let buffered = BufReader::new(input);
+    println!("\n--- Day 1: Historian Hysteria ---");
+    println!(" - Part one solution: {}", part_one);
+    println!(" - Part two solution: {}\n", part_two);
+}
 
-    let mut list_a = Vec::new();
-    let mut list_b = Vec::new();
+fn parse_input<P: AsRef<Path>>(filename: P) -> (Vec<i64>, Vec<i64>) {
+    let mut left_list = Vec::new();
+    let mut right_list = Vec::new();
 
-    for line in buffered.lines() {
-        let line_ok = line?;
-        let numbers: Vec<u64> = line_ok
-            .trim()
-            .split_whitespace()
-            .map(|x| x.parse().unwrap())
-            .collect();
-
-        list_a.push(numbers[0]);
-        list_b.push(numbers[1]);
+    if let Ok(lines) = crate::read_lines(filename) {
+        for line in lines.map_while(Result::ok) {
+            let mut numbers = line.split_whitespace().map(|n| n.parse::<i64>().unwrap());
+            left_list.push(numbers.next().unwrap());
+            right_list.push(numbers.next().unwrap());
+        }
     }
 
-    list_a.sort();
-    list_b.sort();
+    left_list.sort();
+    right_list.sort();
 
-    let part_one = calculate_distance(&list_a, &list_b);
-    let part_two = get_similarity_score(&list_a, &list_b);
-
-    println!("");
-    println!("--- Day 1: Historian Hysteria ---");
-    println!(" - Part one solution: {}", part_one);
-    println!(" - Part two solution: {}", part_two);
-    println!("");
-
-    Ok(())
+    (left_list, right_list)
 }
 
-fn calculate_distance(l1: &Vec<u64>, l2: &Vec<u64>) -> u64 {
-    l1.iter()
-        .zip(l2.iter())
+fn get_distance(left_list: &[i64], right_list: &[i64]) -> u64 {
+    left_list
+        .iter()
+        .zip(right_list.iter())
         .map(|(x, y)| x.abs_diff(*y))
-        .fold(0, |acc, x| acc + x)
+        .sum()
 }
 
-fn get_similarity_score(l1: &Vec<u64>, l2: &Vec<u64>) -> u64 {
+fn get_similarity_score(left_list: &[i64], right_list: &[i64]) -> i64 {
     let mut similarity_score = 0;
-
     let mut cache = HashMap::new();
 
-    for number in l1 {
+    for number in left_list {
         if let Some(occurance) = cache.get(number) {
             similarity_score += number * occurance;
         } else {
-            let occurance = l2.iter().filter(|x| *x == number).fold(0, |acc, _| acc + 1);
+            let occurance = right_list
+                .iter()
+                .filter(|x| *x == number)
+                .fold(0, |acc, _| acc + 1);
             cache.insert(*number, occurance);
 
             similarity_score += number * occurance;
@@ -64,4 +56,21 @@ fn get_similarity_score(l1: &Vec<u64>, l2: &Vec<u64>) -> u64 {
     }
 
     similarity_score
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn part_one_example() {
+        let (left, right) = parse_input("input/day01-test.txt");
+        assert_eq!(get_distance(&left, &right), 11);
+    }
+
+    #[test]
+    fn part_two_example() {
+        let (left, right) = parse_input("input/day01-test.txt");
+        assert_eq!(get_similarity_score(&left, &right), 31);
+    }
 }
