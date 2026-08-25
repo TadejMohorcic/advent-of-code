@@ -45,13 +45,10 @@ fn get_similarity_score(left_list: &[i64], right_list: &[i64]) -> i64 {
         if let Some(occurance) = cache.get(number) {
             similarity_score += number * occurance;
         } else {
-            let occurance = right_list
-                .iter()
-                .filter(|x| *x == number)
-                .fold(0, |acc, _| acc + 1);
-            cache.insert(*number, occurance);
+            let occurance = right_list.iter().filter(|x| *x == number).count();
+            cache.insert(*number, occurance as i64);
 
-            similarity_score += number * occurance;
+            similarity_score += number * occurance as i64;
         }
     }
 
