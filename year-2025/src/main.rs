@@ -27,7 +27,7 @@ fn main() {
     day09::main();
     day10::main();
     day11::main();
-    let _ = day12::main();
+    day12::main();
 }
 
 fn read_lines<P>(filename: P) -> io::Result<io::Lines<io::BufReader<File>>>
