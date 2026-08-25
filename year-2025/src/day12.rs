@@ -1,47 +1,62 @@
-use std::fs::File;
-use std::io::{BufRead, BufReader, Error};
+use std::path::Path;
 
-pub fn main() -> Result<(), Error> {
-    let path = "input/day12.txt";
+pub fn main() {
+    let (shapes, regions) = parse_input("input/day12.txt");
+    let part_one = get_possible_regions(&shapes, &regions);
 
-    let input = File::open(path)?;
-    let buffered = BufReader::new(input);
+    println!("--- Day 12: Christmas Tree Farm ---");
+    println!(" - Part one solution: {}\n", part_one);
+}
 
-    let mut part_one = 0;
+fn parse_input<P: AsRef<Path>>(filename: P) -> (Vec<i64>, Vec<(i64, Vec<i64>)>) {
+    let mut shapes = Vec::new();
+    let mut shape_size = 0;
+    let mut regions = Vec::new();
 
-    let tile_areas: Vec<u64> = [5, 7, 6, 7, 7, 7].to_vec();
+    if let Ok(lines) = crate::read_lines(filename) {
+        for line in lines.map_while(Result::ok) {
+            match line.trim().split_once(": ") {
+                Some(split) => {
+                    let area = split
+                        .0
+                        .split("x")
+                        .map(|n| n.parse::<i64>().unwrap())
+                        .product();
+                    let shapes_used = split
+                        .1
+                        .split_whitespace()
+                        .map(|n| n.parse::<i64>().unwrap())
+                        .collect();
+                    regions.push((area, shapes_used))
+                }
+                None => {
+                    if line.is_empty() {
+                        shapes.push(shape_size);
+                        shape_size = 0;
+                        continue;
+                    }
 
-    for line in buffered.lines() {
-        let line_ok = line?;
-        let split_line = line_ok.trim().split_once(": ");
-
-        match split_line {
-            Some(split) => {
-                let area: u64 = split
-                    .0
-                    .split('x')
-                    .map(|x| x.parse().unwrap())
-                    .fold(1, |acc, x: u64| acc * x);
-                let tiles_used: Vec<u64> = split
-                    .1
-                    .split_whitespace()
-                    .map(|x| x.parse().unwrap())
-                    .collect();
-                let tile_area = tiles_used
-                    .iter()
-                    .zip(tile_areas.iter())
-                    .fold(0, |acc, (x, y)| acc + x * y);
-                if area > tile_area {
-                    part_one += 1;
+                    shape_size += line.trim().chars().filter(|c| *c == '#').count() as i64;
                 }
             }
-            None => continue,
         }
     }
 
-    println!("--- Day 12: Christmas Tree Farm ---");
-    println!(" - Part one solution: {}", part_one);
-    println!("");
+    (shapes, regions)
+}
 
-    Ok(())
+fn get_possible_regions(shapes: &[i64], regions: &[(i64, Vec<i64>)]) -> usize {
+    regions
+        .iter()
+        .filter_map(|(size, shapes_used)| {
+            let mut needed_area = 0;
+            for (i, s) in shapes_used.iter().enumerate() {
+                if *s == 0 {
+                    continue;
+                }
+                needed_area += s * shapes[i];
+            }
+            (needed_area <= *size).then_some(())
+        })
+        .count()
 }
