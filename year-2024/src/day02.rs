@@ -1,81 +1,84 @@
-use std::fs::File;
-use std::io::{BufRead, BufReader, Error};
+use std::path::Path;
 
-pub fn main() -> Result<(), Error> {
-    // let path = "input/day02-test.txt";
-    let path = "input/day02.txt";
-
-    let input = File::open(path)?;
-    let buffered = BufReader::new(input);
-
-    let mut reports = Vec::new();
-
-    for line in buffered.lines() {
-        let line_ok = line?;
-        let report: Vec<i64> = line_ok
-            .trim()
-            .split_whitespace()
-            .map(|x| x.parse().unwrap())
-            .collect();
-
-        reports.push(report);
-    }
-
+pub fn main() {
+    let reports = parse_input("input/day02.txt");
     let part_one = check_reports(&reports, false);
     let part_two = check_reports(&reports, true);
 
     println!("--- Day 2: Red-Nosed Reports ---");
     println!(" - Part one solution: {}", part_one);
-    println!(" - Part two solution: {}", part_two);
-    println!("");
-
-    Ok(())
+    println!(" - Part two solution: {}\n", part_two);
 }
 
-fn check_reports(reports: &[Vec<i64>], part: bool) -> i64 {
-    let mut valid_reports = 0;
+fn parse_input<P: AsRef<Path>>(filename: P) -> Vec<Vec<i64>> {
+    let mut reports = Vec::new();
 
-    for report in reports {
-        if is_valid(report) {
-            valid_reports += 1;
-        } else if part {
-            let n = report.len();
+    if let Ok(lines) = crate::read_lines(filename) {
+        for line in lines.map_while(Result::ok) {
+            reports.push(
+                line.split_whitespace()
+                    .map(|n| n.parse().unwrap())
+                    .collect(),
+            )
+        }
+    }
 
-            for i in 0..n {
-                let new_report = [&report[0..i], &report[i + 1..n]].concat();
+    reports
+}
 
-                if is_valid(&new_report) {
-                    valid_reports += 1;
-                    break;
+fn get_differences(report: &[i64]) -> Vec<i64> {
+    report.array_windows::<2>().map(|[x, y]| y - x).collect()
+}
+
+fn is_valid_report(report: &[i64]) -> bool {
+    let differences = get_differences(report);
+
+    if differences.iter().all(|n| *n > 0 && *n < 4) || differences.iter().all(|n| *n < 0 && *n > -4)
+    {
+        return true;
+    }
+
+    false
+}
+
+fn check_reports(reports: &[Vec<i64>], part: bool) -> usize {
+    reports
+        .iter()
+        .filter_map(|report| {
+            if is_valid_report(report) {
+                Some(())
+            } else if part {
+                let n = report.len();
+
+                for i in 0..n {
+                    let new_report = [&report[0..i], &report[i + 1..n]].concat();
+
+                    if is_valid_report(&new_report) {
+                        return Some(());
+                    }
                 }
-            }
-        }
-    }
 
-    valid_reports
+                None
+            } else {
+                None
+            }
+        })
+        .count()
 }
 
-fn is_valid(report: &[i64]) -> bool {
-    let n = report.len();
-    let mut previous_sign: Option<bool> = None;
+#[cfg(test)]
+mod tests {
+    use super::*;
 
-    for i in 0..n - 1 {
-        let distance = report[i] - report[i + 1];
-        let abs_distance = distance.abs();
-        let sign = distance > 0;
-
-        if 3 < abs_distance || abs_distance < 1 {
-            return false;
-        }
-
-        if let Some(prev) = previous_sign {
-            if sign != prev {
-                return false;
-            }
-        } else {
-            previous_sign = Some(sign);
-        }
+    #[test]
+    fn part_one_example() {
+        let reports = parse_input("input/day02-test.txt");
+        assert_eq!(check_reports(&reports, false), 2);
     }
 
-    true
+    #[test]
+    fn part_two_example() {
+        let reports = parse_input("input/day02-test.txt");
+        assert_eq!(check_reports(&reports, true), 4);
+    }
 }
