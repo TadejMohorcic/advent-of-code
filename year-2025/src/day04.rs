@@ -13,17 +13,15 @@ pub fn main() {
 
 fn parse_input<P: AsRef<Path>>(filename: P) -> HashSet<(i64, i64)> {
     let mut roll_locations = HashSet::new();
-    let mut row = 0;
 
     if let Ok(lines) = crate::read_lines(filename) {
-        for line in lines.map_while(Result::ok) {
+        for (row, line) in lines.map_while(Result::ok).enumerate() {
             roll_locations.extend(
                 line.trim()
                     .chars()
                     .enumerate()
-                    .filter_map(|(i, c)| (c == '@').then_some((row, i as i64))),
+                    .filter_map(|(i, c)| (c == '@').then_some((row as i64, i as i64))),
             );
-            row += 1;
         }
     }
 
@@ -57,10 +55,8 @@ fn generate_map(towels: &HashSet<(i64, i64)>) -> HashMap<(i64, i64), Vec<(i64, i
 fn remove_paper_rolls(paper_rolls: &HashSet<(i64, i64)>, repeat: bool) -> usize {
     let paper_map = generate_map(paper_rolls);
 
-    let mut neighbour_count: HashMap<(i64, i64), usize> = paper_map
-        .iter()
-        .map(|(k, v)| (*k, v.len()))
-        .collect();
+    let mut neighbour_count: HashMap<(i64, i64), usize> =
+        paper_map.iter().map(|(k, v)| (*k, v.len())).collect();
 
     let mut to_remove: VecDeque<(i64, i64)> = neighbour_count
         .iter()
