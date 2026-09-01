@@ -1,115 +1,109 @@
-use std::fs::File;
-use std::io::{BufRead, BufReader, Error};
-
 use std::collections::HashSet;
+use std::path::Path;
 
-pub fn main() -> Result<(), Error> {
-    // let path = "input/day10-test.txt";
-    let path = "input/day10.txt";
-
-    let input = File::open(path)?;
-    let buffered = BufReader::new(input);
-
-    let mut topological_map = Vec::new();
-
-    for line in buffered.lines() {
-        let line_ok = line?;
-
-        let heights: Vec<u32> = line_ok
-            .trim()
-            .chars()
-            .map(|x| x.to_digit(10).unwrap())
-            .collect();
-
-        topological_map.push(heights);
-    }
-
-    let part_one = score_trailheads(&topological_map, false);
-    let part_two = score_trailheads(&topological_map, true);
+pub fn main() {
+    let topographic_map = parse_input("input/day10.txt");
+    let part_one = score_all_trailheads(&topographic_map, false);
+    let part_two = score_all_trailheads(&topographic_map, true);
 
     println!("--- Day 10: Hoof It ---");
     println!(" - Part one solution: {}", part_one);
-    println!(" - Part two solution: {}", part_two);
-    println!("");
-
-    Ok(())
+    println!(" - Part two solution: {}\n", part_two);
 }
 
-#[derive(Hash, Eq, PartialEq)]
-struct Position {
-    x: usize,
-    y: usize,
+fn parse_input<P: AsRef<Path>>(filename: P) -> Vec<Vec<i64>> {
+    let mut topographic_map = Vec::new();
+
+    if let Ok(lines) = crate::read_lines(filename) {
+        for line in lines.map_while(Result::ok) {
+            topographic_map.push(
+                line.trim()
+                    .chars()
+                    .map(|n| n.to_digit(10).unwrap() as i64)
+                    .collect(),
+            );
+        }
+    }
+
+    topographic_map
 }
 
-fn score_trail(
-    position: Position,
-    height: u32,
-    map: &Vec<Vec<u32>>,
-    peaks_reached: &mut HashSet<Position>,
-) -> usize {
-    let m = map.len();
-    let n = map[0].len();
-
-    let x = position.x;
-    let y = position.y;
-
+fn get_trailhead_score(
+    start: (i64, i64),
+    height: i64,
+    topo_map: &[Vec<i64>],
+    peaks_found: &mut HashSet<(i64, i64)>,
+) -> i64 {
     if height == 9 {
-        peaks_reached.insert(Position { x: x, y: y });
+        peaks_found.insert(start);
         return 1;
     }
 
-    let mut total_trails = 0;
+    let m = topo_map.len();
+    let n = topo_map[0].len();
+    let mut total_trailheads = 0;
 
     for i in [-1, 1] {
-        let new_x = x as i64 + i;
-        let new_y = y as i64 + i;
+        let new_x = start.0 + i;
+        let new_y = start.1 + i;
 
-        if 0 <= new_x && n > new_x as usize && map[y][new_x as usize] == height + 1 {
-            total_trails += score_trail(
-                Position {
-                    x: new_x as usize,
-                    y: y,
-                },
-                height + 1,
-                map,
-                peaks_reached,
-            );
+        if 0 <= new_x
+            && new_x < m as i64
+            && topo_map[new_x as usize][start.1 as usize] == height + 1
+        {
+            total_trailheads +=
+                get_trailhead_score((new_x, start.1), height + 1, topo_map, peaks_found);
         }
 
-        if 0 <= new_y && m > new_y as usize && map[new_y as usize][x] == height + 1 {
-            total_trails += score_trail(
-                Position {
-                    x: x,
-                    y: new_y as usize,
-                },
-                height + 1,
-                map,
-                peaks_reached,
-            );
+        if 0 <= new_y
+            && new_y < n as i64
+            && topo_map[start.0 as usize][new_y as usize] == height + 1
+        {
+            total_trailheads +=
+                get_trailhead_score((start.0, new_y), height + 1, topo_map, peaks_found);
         }
     }
 
-    total_trails
+    total_trailheads
 }
 
-fn score_trailheads(map: &Vec<Vec<u32>>, part: bool) -> usize {
+fn score_all_trailheads(topo_map: &[Vec<i64>], part: bool) -> i64 {
     let mut result = 0;
-    let mut row = 0;
-
-    for map_row in map {
-        result += map_row
+    for (row_id, row) in topo_map.iter().enumerate() {
+        result += row
             .iter()
             .enumerate()
-            .filter(|(_, x)| **x == 0)
-            .map(|(col, _)| {
-                let mut peaks = HashSet::new();
-                let trails = score_trail(Position { x: col, y: row }, 0, map, &mut peaks);
-                if part { trails } else { peaks.len() }
+            .filter_map(|(c, t)| {
+                (*t == 0).then_some({
+                    let mut peaks: HashSet<(i64, i64)> = HashSet::new();
+                    let trailhead_score =
+                        get_trailhead_score((row_id as i64, c as i64), 0, topo_map, &mut peaks);
+                    if part {
+                        trailhead_score
+                    } else {
+                        peaks.len() as i64
+                    }
+                })
             })
-            .sum::<usize>();
-
-        row += 1;
+            .sum::<i64>();
     }
 
     result
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn part_one_example() {
+        let topographic_map = parse_input("input/day10-test.txt");
+        assert_eq!(score_all_trailheads(&topographic_map, false), 36);
+    }
+
+    #[test]
+    fn part_two_example() {
+        let topographic_map = parse_input("input/day10-test.txt");
+        assert_eq!(score_all_trailheads(&topographic_map, true), 81);
+    }
 }
