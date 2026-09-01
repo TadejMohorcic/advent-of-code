@@ -63,39 +63,19 @@ fn get_next_obstacle(
 ) -> Option<i64> {
     match search_space {
         Some(obstacles) => {
+            let id = obstacles.binary_search(&position).unwrap_or_else(|n| n);
+
             if is_increasing {
-                let (mut left, mut right) = (0, obstacles.len());
-
-                while left < right {
-                    let mid = left + (right - left) / 2;
-
-                    if obstacles[mid] > position {
-                        right = mid;
-                    } else {
-                        left = mid + 1;
-                    }
-                }
-                if left < obstacles.len() {
-                    Some(obstacles[left] - 1)
-                } else {
+                if id == obstacles.len() {
                     None
+                } else {
+                    Some(obstacles[id] - 1)
                 }
             } else {
-                let (mut left, mut right) = (0, obstacles.len());
-
-                while left < right {
-                    let mid = left + (right - left) / 2;
-                    if obstacles[mid] < position {
-                        left = mid + 1;
-                    } else {
-                        right = mid;
-                    }
-                }
-
-                if left > 0 {
-                    Some(obstacles[left - 1] + 1)
-                } else {
+                if id == 0 {
                     None
+                } else {
+                    Some(obstacles[id - 1] + 1)
                 }
             }
         }
