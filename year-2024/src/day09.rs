@@ -1,89 +1,70 @@
-use std::fs::File;
-use std::io::{BufRead, BufReader, Error};
+use std::path::Path;
 
-pub fn main() -> Result<(), Error> {
-    // let path = "input/day09-test.txt";
-    let path = "input/day09.txt";
-
-    let input = File::open(path)?;
-    let buffered = BufReader::new(input);
-
-    let mut input_string: Option<String> = None;
-
-    for line in buffered.lines() {
-        let line_ok = line?;
-
-        input_string = Some(line_ok.trim().to_string());
-    }
-
-    let (mut files, mut empty_spaces) = get_disk_layout(input_string.unwrap());
-
-    let part_one = format_disk(&files, &empty_spaces);
-    let part_two = format_disk_whole(&mut files, &mut empty_spaces);
+pub fn main() {
+    let mut data = parse_input("input/day09.txt");
+    let part_one = format_single(&data);
+    let part_two = format_whole(&mut data);
 
     println!("--- Day 9: Disk Fragmenter ---");
     println!(" - Part one solution: {}", part_one);
-    println!(" - Part two solution: {}", part_two);
-    println!("");
-
-    Ok(())
+    println!(" - Part two solution: {}\n", part_two);
 }
 
-fn get_disk_layout(disk: String) -> (Vec<(usize, i64)>, Vec<i64>) {
-    let files: Vec<(usize, i64)> = disk
-        .chars()
-        .enumerate()
-        .filter(|(e, _)| e % 2 == 0)
-        .map(|(e, x)| (e / 2, x.to_digit(10).unwrap() as i64))
-        .collect();
+fn parse_input<P: AsRef<Path>>(filename: P) -> Vec<(i64, i64)> {
+    let mut data = Vec::new();
 
-    let empty_space: Vec<i64> = disk
-        .chars()
-        .enumerate()
-        .filter(|(e, _)| e % 2 != 0)
-        .map(|(_, x)| x.to_digit(10).unwrap() as i64)
-        .collect();
+    if let Ok(lines) = crate::read_lines(filename) {
+        for line in lines.map_while(Result::ok) {
+            data.extend(line.trim().chars().enumerate().map(|(i, n)| {
+                if i % 2 == 0 {
+                    ((i / 2) as i64, n.to_digit(10).unwrap() as i64)
+                } else {
+                    (-1, n.to_digit(10).unwrap() as i64)
+                }
+            }));
+        }
+    }
 
-    (files, empty_space)
+    data
 }
 
-fn format_disk(files: &Vec<(usize, i64)>, empty: &Vec<i64>) -> usize {
+fn get_sum(start: i64, end: i64) -> i64 {
+    (end - start + 1) * (end + start) / 2
+}
+
+fn format_single(data: &[(i64, i64)]) -> i64 {
     let mut checksum = 0;
     let mut global_index = 0;
-
-    let mut local_i = 0;
-    let mut local_j = files.len() - 1;
-    let mut size_of_j = files[local_j].1;
+    let mut i = 0;
+    let mut j = data.len() - 1;
+    let mut size = data[j].1;
 
     loop {
-        let value_i = files[local_i].0;
+        if data[i].0 != -1 {
+            checksum += get_sum(global_index, global_index + data[i].1 - 1) * data[i].0;
+            global_index += data[i].1;
+        } else {
+            let mut gap = data[i].1;
 
-        for _ in 0..files[local_i].1 {
-            checksum += value_i * global_index;
-            global_index += 1;
-        }
-
-        for _ in 0..empty[local_i] {
-            if size_of_j == 0 {
-                local_j -= 1;
-                size_of_j = files[local_j].1;
-            }
-
-            checksum += files[local_j].0 * global_index;
-            size_of_j -= 1;
-            global_index += 1;
-        }
-
-        local_i += 1;
-
-        if local_i == local_j {
-            if size_of_j > 0 {
-                for _ in 0..size_of_j {
-                    checksum += files[local_i].0 * global_index;
-                    global_index += 1;
+            while gap > 0 {
+                if size == 0 {
+                    j -= 2;
+                    size = data[j].1;
                 }
+                let n = gap.min(size);
+                checksum += get_sum(global_index, global_index + n - 1) * data[j].0;
+                global_index += n;
+                size -= n;
+                gap -= n;
             }
+        }
 
+        i += 1;
+
+        if i == j {
+            if size > 0 {
+                checksum += get_sum(global_index, global_index + size - 1) * data[j].0;
+            }
             break;
         }
     }
@@ -91,59 +72,61 @@ fn format_disk(files: &Vec<(usize, i64)>, empty: &Vec<i64>) -> usize {
     checksum
 }
 
-fn format_disk_whole(files: &mut Vec<(usize, i64)>, empty: &mut Vec<i64>) -> usize {
-    let process_order: Vec<(usize, i64)> = files.iter().rev().cloned().collect();
+fn format_whole(data: &mut Vec<(i64, i64)>) -> i64 {
+    let process_order: Vec<(i64, i64)> = data.iter().filter(|(id, _)| *id != -1).cloned().collect();
 
-    for file in process_order {
-        let file_pos = files.iter().position(|f| f.0 == file.0).unwrap();
+    for file in process_order.into_iter().rev() {
+        let file_pos = data.iter().position(|(id, _)| *id == file.0).unwrap();
+        let empty = (0..file_pos).find(|&i| data[i].0 == -1 && data[i].1 >= file.1);
 
-        let empty_space = (0..file_pos)
-            .find(|&j| empty[j] >= file.1)
-            .map(|j| (j, empty[j]));
+        if let Some(i) = empty {
+            data[file_pos].0 = -1;
 
-        if let Some((j, _)) = empty_space {
-            if j == file_pos - 1 {
-                if !(j == empty.len() - 1) {
-                    empty[j + 1] += empty[j];
-                }
-                empty[j] = 0;
-            } else {
-                files.remove(file_pos);
-                files.insert(j + 1, file);
-
-                if file_pos == empty.len() {
-                    empty[j] -= file.1;
-                    empty.remove(file_pos - 1);
-                    empty.insert(j, 0);
-                } else {
-                    empty[j] -= file.1;
-                    empty[file_pos] += empty[file_pos - 1] + file.1;
-                    empty.remove(file_pos - 1);
-                    empty.insert(j, 0);
-                }
+            if file_pos + 1 < data.len() && data[file_pos + 1].0 == -1 {
+                data[file_pos].1 += data[file_pos + 1].1;
+                data.remove(file_pos + 1);
             }
+
+            if file_pos > 0 && data[file_pos - 1].0 == -1 {
+                data[file_pos - 1].1 += data[file_pos].1;
+                data.remove(file_pos);
+            }
+
+            data[i].1 -= file.1;
+            data.insert(i, file);
         }
     }
 
-    calculate_checksum(files, empty)
+    calculate_checksum(data)
 }
 
-fn calculate_checksum(files: &Vec<(usize, i64)>, empty: &Vec<i64>) -> usize {
+fn calculate_checksum(data: &[(i64, i64)]) -> i64 {
     let mut checksum = 0;
     let mut global_index = 0;
 
-    for i in 0..files.len() {
-        let file = files[i];
-
-        for _ in 0..file.1 {
-            checksum += global_index * file.0;
-            global_index += 1
+    for (id, len) in data {
+        if *id != -1 {
+            checksum += get_sum(global_index, global_index + len - 1) * id;
         }
-
-        if i != files.len() - 1 {
-            global_index += empty[i] as usize;
-        }
+        global_index += len;
     }
 
     checksum
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn part_one_example() {
+        let data = parse_input("input/day09-test.txt");
+        assert_eq!(format_single(&data), 1928);
+    }
+
+    #[test]
+    fn part_two_example() {
+        let mut data = parse_input("input/day09-test.txt");
+        assert_eq!(format_whole(&mut data), 2858);
+    }
 }
