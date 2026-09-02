@@ -1,5 +1,4 @@
 use rayon::prelude::*;
-use std::cmp::{max, min};
 use std::collections::{HashMap, HashSet};
 use std::path::Path;
 use std::sync::Arc;
@@ -104,8 +103,8 @@ fn get_visited_locations(
         };
 
         if let Some(next) = get_next_obstacle(search, pos, dir > 0) {
-            let min = min(pos, next);
-            let max = max(pos, next);
+            let min = pos.min(next);
+            let max = pos.max(next);
 
             for i in min..=max {
                 if dir == dx {
@@ -163,8 +162,8 @@ fn is_looping(start: (i64, i64), rows: &Grid, cols: &Grid) -> bool {
         };
 
         if let Some(next) = get_next_obstacle(search, pos, dir > 0) {
-            let min = min(pos, next);
-            let max = max(pos, next);
+            let min = pos.min(next);
+            let max = pos.max(next);
 
             for i in min..=max {
                 if dir == dx {

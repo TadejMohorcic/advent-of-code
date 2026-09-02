@@ -1,5 +1,4 @@
 use rustc_hash::FxHashMap;
-use std::cmp::{max, min};
 use std::collections::HashSet;
 use std::path::Path;
 
@@ -70,15 +69,15 @@ fn is_on_boundary(p: Position, points: &[Position]) -> bool {
         let p2 = points[(i + 1) % n];
 
         if p1.x == p2.x {
-            let bottom = min(p1.y, p2.y);
-            let top = max(p1.y, p2.y);
+            let bottom = p1.y.min(p2.y);
+            let top = p1.y.max(p2.y);
 
             if p.x == p1.x && bottom <= p.y && p.y <= top {
                 return true;
             }
         } else {
-            let left = min(p1.x, p2.x);
-            let right = max(p1.x, p2.x);
+            let left = p1.x.min(p2.x);
+            let right = p1.x.max(p2.x);
 
             if p.y == p1.y && left <= p.x && p.x <= right {
                 return true;
@@ -105,8 +104,8 @@ fn is_inside(p: Position, points: &[Position]) -> bool {
             continue;
         }
 
-        let bottom = min(p1.y, p2.y);
-        let top = max(p1.y, p2.y);
+        let bottom = p1.y.min(p2.y);
+        let top = p1.y.max(p2.y);
 
         if bottom <= p.y && p.y < top {
             count += 1;
@@ -130,10 +129,10 @@ fn is_valid_rectangle(
     points: &[Position],
     cache: &mut FxHashMap<Position, bool>,
 ) -> bool {
-    let left = min(p1.x, p2.x);
-    let right = max(p1.x, p2.x);
-    let bottom = min(p1.y, p2.y);
-    let top = max(p1.y, p2.y);
+    let left = p1.x.min(p2.x);
+    let right = p1.x.max(p2.x);
+    let bottom = p1.y.min(p2.y);
+    let top = p1.y.max(p2.y);
 
     for i in left..=right {
         let p1 = Position { x: i, y: bottom };
