@@ -1,87 +1,52 @@
-use std::fs::File;
-use std::io::{BufRead, BufReader, Error};
+use std::path::Path;
 
-pub fn main() -> Result<(), Error> {
-    // let path = "input/day13-test.txt";
-    let path = "input/day13.txt";
+pub fn main() {
+    let (a, b, t) = parse_input("input/day13.txt");
+    let part_one = solve_problems(&a, &b, &t, false);
+    let part_two = solve_problems(&a, &b, &t, true);
 
-    let input = File::open(path)?;
-    let buffered = BufReader::new(input);
+    println!("--- Day 13: Claw Contraption ---");
+    println!(" - Part one solution: {}", part_one);
+    println!(" - Part two solution: {}\n", part_two);
+}
 
-    let mut problems = Vec::new();
+type Problem = (Vec<(i64, i64)>, Vec<(i64, i64)>, Vec<(i64, i64)>);
 
-    let mut button = [[0; 2]; 2];
-    let mut target = [0; 2];
+fn parse_input<P: AsRef<Path>>(filename: P) -> Problem {
+    let mut a_buttons = Vec::new();
+    let mut b_buttons = Vec::new();
+    let mut targets = Vec::new();
+    let mut toggle = 0;
 
-    for line in buffered.lines() {
-        let line_ok = line?;
+    if let Ok(lines) = crate::read_lines(filename) {
+        for line in lines.map_while(Result::ok) {
+            let mut num_iter = line.trim().split(&['+', ',', '=']);
 
-        if let Some(line_split) = line_ok.trim().split_once(": ") {
-            match line_split.0 {
-                "Button A" => {
-                    let coords: Vec<&str> = line_split.1.split(", ").collect();
-                    let move_x: i64 = coords[0].split("+").nth(1).unwrap().parse().unwrap();
-                    let move_y: i64 = coords[1].split("+").nth(1).unwrap().parse().unwrap();
-
-                    button[0][0] = move_x;
-                    button[1][0] = move_y;
+            if let (Some(x), Some(y)) = (num_iter.nth(1), num_iter.nth(1)) {
+                let x = x.parse::<i64>().unwrap();
+                let y = y.parse::<i64>().unwrap();
+                match toggle {
+                    0 => a_buttons.push((x, y)),
+                    1 => b_buttons.push((x, y)),
+                    _ => targets.push((x, y)),
                 }
-                "Button B" => {
-                    let coords: Vec<&str> = line_split.1.split(", ").collect();
-                    let move_x: i64 = coords[0].split("+").nth(1).unwrap().parse().unwrap();
-                    let move_y: i64 = coords[1].split("+").nth(1).unwrap().parse().unwrap();
-
-                    button[0][1] = move_x;
-                    button[1][1] = move_y;
-                }
-                "Prize" => {
-                    let coords: Vec<&str> = line_split.1.split(", ").collect();
-                    let target_x: i64 = coords[0].split("=").nth(1).unwrap().parse().unwrap();
-                    let target_y: i64 = coords[1].split("=").nth(1).unwrap().parse().unwrap();
-
-                    target[0] = target_x;
-                    target[1] = target_y;
-
-                    problems.push(Problem {
-                        a: button,
-                        y: target,
-                    });
-                    button = [[0; 2]; 2];
-                    target = [0; 2];
-                }
-                _ => unreachable!("Invalid input file format!"),
+                toggle = (toggle + 1) % 3;
             }
         }
     }
 
-    let part_one = solve_problems(&problems, false);
-    let part_two = solve_problems(&problems, true);
-
-    println!("--- Day 13: Claw Contraption ---");
-    println!(" - Part one solution: {}", part_one);
-    println!(" - Part two solution: {}", part_two);
-    println!("");
-
-    Ok(())
+    (a_buttons, b_buttons, targets)
 }
 
-struct Problem {
-    a: [[i64; 2]; 2],
-    y: [i64; 2],
-}
-
-fn solve_problem(problem: &Problem, part: bool) -> i64 {
-    let a = problem.a;
-    let mut y = problem.y;
-
+fn solve_problem(a: (i64, i64), b: (i64, i64), mut target: (i64, i64), part: bool) -> i64 {
     if part {
-        y[0] += 10_000_000_000_000;
-        y[1] += 10_000_000_000_000;
+        target.0 += 10_000_000_000_000;
+        target.1 += 10_000_000_000_000;
     }
 
-    let det = a[0][0] * a[1][1] - a[0][1] * a[1][0];
-    let m = y[0] * a[1][1] - y[1] * a[0][1];
-    let n = a[0][0] * y[1] - a[1][0] * y[0];
+    let det = a.0 * b.1 - a.1 * b.0;
+    let m = target.0 * b.1 - target.1 * b.0;
+    let n = a.0 * target.1 - a.1 * target.0;
 
     if det != 0 && m % det == 0 && n % det == 0 {
         return 3 * m / det + n / det;
@@ -90,6 +55,32 @@ fn solve_problem(problem: &Problem, part: bool) -> i64 {
     0
 }
 
-fn solve_problems(problems: &Vec<Problem>, part: bool) -> i64 {
-    problems.iter().map(|x| solve_problem(x, part)).sum()
+fn solve_problems(
+    a_buttons: &[(i64, i64)],
+    b_buttons: &[(i64, i64)],
+    targets: &[(i64, i64)],
+    part: bool,
+) -> i64 {
+    targets
+        .iter()
+        .enumerate()
+        .map(|(i, t)| solve_problem(a_buttons[i], b_buttons[i], *t, part))
+        .sum()
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn part_one_example() {
+        let (a, b, t) = parse_input("input/day13-test.txt");
+        assert_eq!(solve_problems(&a, &b, &t, false), 480);
+    }
+
+    #[test]
+    fn part_two_example() {
+        let (a, b, t) = parse_input("input/day13-test.txt");
+        assert_eq!(solve_problems(&a, &b, &t, true), 875318608908);
+    }
 }
