@@ -1,95 +1,66 @@
-use std::fs::File;
-use std::io::{BufRead, BufReader, Error};
-
 use std::collections::HashSet;
+use std::path::Path;
 
-pub fn main() -> Result<(), Error> {
-    // let path = "input/day12-test.txt";
-    let path = "input/day12.txt";
-
-    let input = File::open(path)?;
-    let buffered = BufReader::new(input);
-
-    let mut map = Vec::new();
-
-    for line in buffered.lines() {
-        let line_ok = line?;
-
-        let map_row: Vec<char> = line_ok.trim().chars().collect();
-        map.push(map_row);
-    }
-
-    let (part_one, part_two) = calculate_price(&map);
+pub fn main() {
+    let farm_map = parse_input("input/day12.txt");
+    let (part_one, part_two) = calculate_price(&farm_map);
 
     println!("--- Day 12: Garden Groups ---");
     println!(" - Part one solution: {}", part_one);
-    println!(" - Part two solution: {}", part_two);
-    println!("");
-
-    Ok(())
+    println!(" - Part two solution: {}\n", part_two);
 }
 
-#[derive(Eq, PartialEq, Hash)]
-struct Position {
-    row: usize,
-    col: usize,
+fn parse_input<P: AsRef<Path>>(filename: P) -> Vec<Vec<char>> {
+    let mut farm_map = Vec::new();
+
+    if let Ok(lines) = crate::read_lines(filename) {
+        for line in lines.map_while(Result::ok) {
+            farm_map.push(line.trim().chars().collect());
+        }
+    }
+
+    farm_map
 }
 
 fn flood_fill(
-    pos: Position,
+    row: usize,
+    col: usize,
     map: &Vec<Vec<char>>,
-    ch: char,
-    visited: &mut HashSet<Position>,
-) -> (usize, usize, usize) {
-    let m = map.len();
-    let n = map[0].len();
-
+    char: char,
+    visited: &mut HashSet<(usize, usize)>,
+) -> (i64, i64, i64) {
     let mut area = 1;
     let mut border = 0;
     let mut sides = 0;
+    let r_i64 = row as i64;
+    let c_i64 = col as i64;
 
-    let row = pos.row;
-    let col = pos.col;
-    let r = row as i64;
-    let c = col as i64;
-
-    visited.insert(pos);
+    visited.insert((row, col));
 
     let in_shape = |r: i64, c: i64| -> bool {
-        r >= 0 && c >= 0 && m > r as usize && n > c as usize && map[r as usize][c as usize] == ch
+        r >= 0
+            && c >= 0
+            && map.len() > r as usize
+            && map[0].len() > c as usize
+            && map[r as usize][c as usize] == char
     };
 
-    if !in_shape(r - 1, c) && (!in_shape(r, c - 1) || in_shape(r - 1, c - 1)) {
-        sides += 1;
-    }
-    if !in_shape(r + 1, c) && (!in_shape(r, c - 1) || in_shape(r + 1, c - 1)) {
-        sides += 1;
-    }
-    if !in_shape(r, c - 1) && (!in_shape(r - 1, c) || in_shape(r - 1, c - 1)) {
-        sides += 1;
-    }
-    if !in_shape(r, c + 1) && (!in_shape(r - 1, c) || in_shape(r - 1, c + 1)) {
-        sides += 1;
-    }
+    sides += (!in_shape(r_i64 - 1, c_i64)
+        && (!in_shape(r_i64, c_i64 - 1) || in_shape(r_i64 - 1, c_i64 - 1))) as i64;
+    sides += (!in_shape(r_i64 + 1, c_i64)
+        && (!in_shape(r_i64, c_i64 - 1) || in_shape(r_i64 + 1, c_i64 - 1))) as i64;
+    sides += (!in_shape(r_i64, c_i64 - 1)
+        && (!in_shape(r_i64 - 1, c_i64) || in_shape(r_i64 - 1, c_i64 - 1))) as i64;
+    sides += (!in_shape(r_i64, c_i64 + 1)
+        && (!in_shape(r_i64 - 1, c_i64) || in_shape(r_i64 - 1, c_i64 + 1))) as i64;
 
     for dir in [-1, 1] {
-        let new_row = row as i64 + dir;
-        let new_col = col as i64 + dir;
+        let new_row = r_i64 + dir;
+        let new_col = c_i64 + dir;
 
-        if in_shape(new_row, c) {
-            if !visited.contains(&Position {
-                row: new_row as usize,
-                col: col,
-            }) {
-                let (a, b, s) = flood_fill(
-                    Position {
-                        row: new_row as usize,
-                        col: col,
-                    },
-                    map,
-                    ch,
-                    visited,
-                );
+        if in_shape(new_row, c_i64) {
+            if !visited.contains(&(new_row as usize, c_i64 as usize)) {
+                let (a, b, s) = flood_fill(new_row as usize, col, map, char, visited);
                 area += a;
                 border += b;
                 sides += s;
@@ -98,20 +69,9 @@ fn flood_fill(
             border += 1;
         }
 
-        if in_shape(r, new_col) {
-            if !visited.contains(&Position {
-                row: row,
-                col: new_col as usize,
-            }) {
-                let (a, b, s) = flood_fill(
-                    Position {
-                        row: row,
-                        col: new_col as usize,
-                    },
-                    map,
-                    ch,
-                    visited,
-                );
+        if in_shape(r_i64, new_col) {
+            if !visited.contains(&(row, new_col as usize)) {
+                let (a, b, s) = flood_fill(row, new_col as usize, map, char, visited);
                 area += a;
                 border += b;
                 sides += s;
@@ -124,17 +84,15 @@ fn flood_fill(
     (area, border, sides)
 }
 
-fn calculate_price(map: &Vec<Vec<char>>) -> (usize, usize) {
+fn calculate_price(map: &Vec<Vec<char>>) -> (i64, i64) {
     let mut price_border = 0;
     let mut price_sides = 0;
     let mut visited = HashSet::new();
 
-    for i in 0..map.len() {
-        for j in 0..map[0].len() {
-            let pos = Position { row: i, col: j };
-            let ch = map[i][j];
-            if !visited.contains(&pos) {
-                let (area, border, sides) = flood_fill(pos, map, ch, &mut visited);
+    for (i, row) in map.iter().enumerate() {
+        for (j, char) in row.iter().enumerate() {
+            if !visited.contains(&(i, j)) {
+                let (area, border, sides) = flood_fill(i, j, map, *char, &mut visited);
                 price_border += area * border;
                 price_sides += area * sides;
             }
@@ -142,4 +100,23 @@ fn calculate_price(map: &Vec<Vec<char>>) -> (usize, usize) {
     }
 
     (price_border, price_sides)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn part_one_example() {
+        let farm_map = parse_input("input/day12-test.txt");
+        let (part_one, _) = calculate_price(&farm_map);
+        assert_eq!(part_one, 1930);
+    }
+
+    #[test]
+    fn part_two_example() {
+        let farm_map = parse_input("input/day12-test.txt");
+        let (_, part_two) = calculate_price(&farm_map);
+        assert_eq!(part_two, 1206);
+    }
 }
