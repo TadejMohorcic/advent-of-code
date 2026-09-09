@@ -154,6 +154,8 @@ fn is_looping(start: (i64, i64), rows: &Grid, cols: &Grid) -> bool {
             return true;
         }
 
+        visited_locations.insert((x, y, dx, dy));
+
         let dir = if dx != 0 { dx } else { dy };
         let (pos, search) = if dx == dir {
             (x, cols.get(&y))
@@ -162,17 +164,6 @@ fn is_looping(start: (i64, i64), rows: &Grid, cols: &Grid) -> bool {
         };
 
         if let Some(next) = get_next_obstacle(search, pos, dir > 0) {
-            let min = pos.min(next);
-            let max = pos.max(next);
-
-            for i in min..=max {
-                if dir == dx {
-                    visited_locations.insert((i, y, dx, dy));
-                } else {
-                    visited_locations.insert((x, i, dx, dy));
-                }
-            }
-
             location = if dir == dx { (next, y) } else { (x, next) };
             direction = (direction.1, -direction.0);
         } else {
