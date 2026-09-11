@@ -1,9 +1,10 @@
 use std::cmp::max;
+use std::io;
 use std::ops::Range;
 use std::path::Path;
 
-pub fn main() {
-    let (ranges, ingredients) = parse_input("input/day05.txt");
+pub fn main() -> io::Result<()> {
+    let (ranges, ingredients) = parse_input("input/day05.txt")?;
     let merged_ranges = merge_ranges(ranges);
     let part_one = count_ingredients(&ingredients, &merged_ranges, false);
     let part_two = count_ingredients(&ingredients, &merged_ranges, true);
@@ -11,29 +12,30 @@ pub fn main() {
     println!("--- Day 5: Cafeteria ---");
     println!(" - Part one solution: {}", part_one);
     println!(" - Part two solution: {}\n", part_two);
+
+    Ok(())
 }
 
-fn parse_input<P: AsRef<Path>>(filename: P) -> (Vec<Range<i64>>, Vec<i64>) {
+fn parse_input<P: AsRef<Path>>(filename: P) -> io::Result<(Vec<Range<i64>>, Vec<i64>)> {
+    let lines = crate::read_lines(filename)?;
     let mut ranges = Vec::new();
     let mut ingredients = Vec::new();
 
-    if let Ok(lines) = crate::read_lines(filename) {
-        for line in lines.map_while(Result::ok) {
-            let line: Vec<i64> = line
-                .trim()
-                .split('-')
-                .filter_map(|x| x.parse().ok())
-                .collect();
+    for line in lines.map_while(Result::ok) {
+        let line: Vec<i64> = line
+            .trim()
+            .split('-')
+            .filter_map(|x| x.parse().ok())
+            .collect();
 
-            match line.as_slice() {
-                [min, max] => ranges.push(*min..*max + 1),
-                [i] => ingredients.push(*i),
-                _ => continue,
-            }
+        match line.as_slice() {
+            [min, max] => ranges.push(*min..*max + 1),
+            [i] => ingredients.push(*i),
+            _ => continue,
         }
     }
 
-    (ranges, ingredients)
+    Ok((ranges, ingredients))
 }
 
 fn merge_ranges(mut ranges: Vec<Range<i64>>) -> Vec<Range<i64>> {
@@ -83,14 +85,14 @@ mod tests {
 
     #[test]
     fn part_one_example() {
-        let (ranges, ingredients) = parse_input("input/day05-test.txt");
+        let (ranges, ingredients) = parse_input("input/day05-test.txt").unwrap();
         let merged_ranges = merge_ranges(ranges);
         assert_eq!(count_ingredients(&ingredients, &merged_ranges, false), 3);
     }
 
     #[test]
     fn part_two_example() {
-        let (ranges, ingredients) = parse_input("input/day05-test.txt");
+        let (ranges, ingredients) = parse_input("input/day05-test.txt").unwrap();
         let merged_ranges = merge_ranges(ranges);
         assert_eq!(count_ingredients(&ingredients, &merged_ranges, true), 14);
     }

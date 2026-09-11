@@ -1,33 +1,35 @@
+use std::io;
 use std::path::Path;
 
-pub fn main() {
-    let splitters = parse_input("input/day07.txt");
+pub fn main() -> io::Result<()> {
+    let splitters = parse_input("input/day07.txt")?;
     let (part_one, part_two) = move_down_the_manifold(&splitters);
 
     println!("--- Day 7: Laboratories ---");
     println!(" - Part one solution: {}", part_one);
     println!(" - Part two solution: {}\n", part_two);
+
+    Ok(())
 }
 
-fn parse_input<P: AsRef<Path>>(filename: P) -> Vec<Vec<i64>> {
+fn parse_input<P: AsRef<Path>>(filename: P) -> io::Result<Vec<Vec<i64>>> {
+    let lines = crate::read_lines(filename)?;
     let mut splitters = Vec::new();
 
-    if let Ok(lines) = crate::read_lines(filename) {
-        for line in lines.map_while(Result::ok) {
-            let row: Vec<i64> = line
-                .trim()
-                .chars()
-                .enumerate()
-                .filter_map(|(i, x)| (x == '^').then_some(i as i64))
-                .collect();
+    for line in lines.map_while(Result::ok) {
+        let row: Vec<i64> = line
+            .trim()
+            .chars()
+            .enumerate()
+            .filter_map(|(i, x)| (x == '^').then_some(i as i64))
+            .collect();
 
-            if !row.is_empty() {
-                splitters.push(row);
-            }
+        if !row.is_empty() {
+            splitters.push(row);
         }
     }
 
-    splitters
+    Ok(splitters)
 }
 
 fn move_down_the_manifold(locations: &[Vec<i64>]) -> (i64, i64) {
@@ -67,14 +69,14 @@ mod tests {
 
     #[test]
     fn part_one_example() {
-        let splitters = parse_input("input/day07-test.txt");
+        let splitters = parse_input("input/day07-test.txt").unwrap();
         let (part_one, _) = move_down_the_manifold(&splitters);
         assert_eq!(part_one, 21);
     }
 
     #[test]
     fn part_two_example() {
-        let splitters = parse_input("input/day07-test.txt");
+        let splitters = parse_input("input/day07-test.txt").unwrap();
         let (_, part_two) = move_down_the_manifold(&splitters);
         assert_eq!(part_two, 40);
     }

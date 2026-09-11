@@ -1,15 +1,18 @@
 use rayon::prelude::*;
 use rustc_hash::FxHashMap;
+use std::io;
 use std::path::Path;
 
-pub fn main() {
-    let manuals = parse_input("input/day10.txt");
+pub fn main() -> io::Result<()> {
+    let manuals = parse_input("input/day10.txt")?;
     let part_one = toggle_lights(&manuals);
     let part_two = toggle_joltages(&manuals);
 
     println!("--- Day 10: Factory ---");
     println!(" - Part one solution: {}", part_one);
     println!(" - Part two solution: {}\n", part_two);
+
+    Ok(())
 }
 
 struct Manual {
@@ -18,46 +21,45 @@ struct Manual {
     joltage_requirements: Vec<i64>,
 }
 
-fn parse_input<P: AsRef<Path>>(filename: P) -> Vec<Manual> {
+fn parse_input<P: AsRef<Path>>(filename: P) -> io::Result<Vec<Manual>> {
+    let lines = crate::read_lines(filename)?;
     let mut manuals = Vec::new();
 
-    if let Ok(lines) = crate::read_lines(filename) {
-        for line in lines.map_while(Result::ok) {
-            let mut line = line.split_whitespace();
-            let indicator_light_diagram = line
-                .next()
-                .unwrap()
-                .trim_matches(['[', ']'])
-                .chars()
-                .map(|c| match c {
-                    '#' => 1,
-                    _ => 0,
-                })
-                .collect();
-            let joltage_requirements = line
-                .next_back()
-                .unwrap()
-                .trim_matches(['{', '}'])
-                .split(',')
-                .map(|x| x.parse().unwrap())
-                .collect();
-            let buttons = line
-                .map(|c| {
-                    c.trim_matches(['(', ')'])
-                        .split(',')
-                        .map(|x| x.parse().unwrap())
-                        .collect()
-                })
-                .collect();
-            manuals.push(Manual {
-                indicator_light_diagram,
-                joltage_requirements,
-                buttons,
-            });
-        }
+    for line in lines.map_while(Result::ok) {
+        let mut line = line.split_whitespace();
+        let indicator_light_diagram = line
+            .next()
+            .unwrap()
+            .trim_matches(['[', ']'])
+            .chars()
+            .map(|c| match c {
+                '#' => 1,
+                _ => 0,
+            })
+            .collect();
+        let joltage_requirements = line
+            .next_back()
+            .unwrap()
+            .trim_matches(['{', '}'])
+            .split(',')
+            .map(|x| x.parse().unwrap())
+            .collect();
+        let buttons = line
+            .map(|c| {
+                c.trim_matches(['(', ')'])
+                    .split(',')
+                    .map(|x| x.parse().unwrap())
+                    .collect()
+            })
+            .collect();
+        manuals.push(Manual {
+            indicator_light_diagram,
+            joltage_requirements,
+            buttons,
+        });
     }
 
-    manuals
+    Ok(manuals)
 }
 
 fn get_all_combinations(n: usize) -> Vec<Vec<usize>> {
@@ -201,13 +203,13 @@ mod tests {
 
     #[test]
     fn part_one_example() {
-        let manuals = parse_input("input/day10-test.txt");
+        let manuals = parse_input("input/day10-test.txt").unwrap();
         assert_eq!(toggle_lights(&manuals), 7)
     }
 
     #[test]
     fn part_two_example() {
-        let manuals = parse_input("input/day10-test.txt");
+        let manuals = parse_input("input/day10-test.txt").unwrap();
         assert_eq!(toggle_joltages(&manuals), 33)
     }
 }

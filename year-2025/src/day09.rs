@@ -1,14 +1,17 @@
 use rustc_hash::FxHashMap;
 use std::collections::HashSet;
+use std::io;
 use std::path::Path;
 
-pub fn main() {
-    let (points, sx, sy) = parse_input("input/day09.txt");
+pub fn main() -> io::Result<()> {
+    let (points, sx, sy) = parse_input("input/day09.txt")?;
     let (part_one, part_two) = find_largest_area(&points, &sx, &sy);
 
     println!("--- Day 9: Movie Theater ---");
     println!(" - Part one solution: {}", part_one);
     println!(" - Part two solution: {}\n", part_two);
+
+    Ok(())
 }
 
 #[derive(Clone, Copy, PartialEq, Eq, Hash)]
@@ -17,20 +20,19 @@ struct Position {
     y: i64,
 }
 
-fn parse_input<P: AsRef<Path>>(filename: P) -> (Vec<Position>, Vec<i64>, Vec<i64>) {
+fn parse_input<P: AsRef<Path>>(filename: P) -> io::Result<(Vec<Position>, Vec<i64>, Vec<i64>)> {
+    let lines = crate::read_lines(filename)?;
     let mut points = Vec::new();
     let mut x_coordinates = HashSet::new();
     let mut y_coordinates = HashSet::new();
 
-    if let Ok(lines) = crate::read_lines(filename) {
-        for line in lines.map_while(Result::ok) {
-            let mut line = line.trim().split(',').map(|x| x.parse::<i64>().unwrap());
-            let x = line.next().unwrap();
-            let y = line.next().unwrap();
-            points.push(Position { x, y });
-            x_coordinates.insert(x);
-            y_coordinates.insert(y);
-        }
+    for line in lines.map_while(Result::ok) {
+        let mut line = line.trim().split(',').map(|x| x.parse::<i64>().unwrap());
+        let x = line.next().unwrap();
+        let y = line.next().unwrap();
+        points.push(Position { x, y });
+        x_coordinates.insert(x);
+        y_coordinates.insert(y);
     }
 
     let mut sorted_x: Vec<i64> = x_coordinates.iter().copied().collect();
@@ -38,7 +40,7 @@ fn parse_input<P: AsRef<Path>>(filename: P) -> (Vec<Position>, Vec<i64>, Vec<i64
     let mut sorted_y: Vec<i64> = y_coordinates.iter().copied().collect();
     sorted_y.sort();
 
-    (points, sorted_x, sorted_y)
+    Ok((points, sorted_x, sorted_y))
 }
 
 fn calculate_area(p1: Position, p2: Position) -> i64 {
@@ -204,14 +206,14 @@ mod tests {
 
     #[test]
     fn part_one_example() {
-        let (points, sx, sy) = parse_input("input/day09-test.txt");
+        let (points, sx, sy) = parse_input("input/day09-test.txt").unwrap();
         let (part_one, _) = find_largest_area(&points, &sx, &sy);
         assert_eq!(part_one, 50)
     }
 
     #[test]
     fn part_two_example() {
-        let (points, sx, sy) = parse_input("input/day09-test.txt");
+        let (points, sx, sy) = parse_input("input/day09-test.txt").unwrap();
         let (_, part_two) = find_largest_area(&points, &sx, &sy);
         assert_eq!(part_two, 24)
     }

@@ -1,31 +1,33 @@
 use std::collections::{HashMap, HashSet, VecDeque};
+use std::io;
 use std::path::Path;
 
-pub fn main() {
-    let paper_rolls = parse_input("input/day04.txt");
+pub fn main() -> io::Result<()> {
+    let paper_rolls = parse_input("input/day04.txt")?;
     let part_one = remove_paper_rolls(&paper_rolls, false);
     let part_two = remove_paper_rolls(&paper_rolls, true);
 
     println!("--- Day 4: Printing Department ---");
     println!(" - Part one solution: {}", part_one);
     println!(" - Part two solution: {}\n", part_two);
+
+    Ok(())
 }
 
-fn parse_input<P: AsRef<Path>>(filename: P) -> HashSet<(i64, i64)> {
+fn parse_input<P: AsRef<Path>>(filename: P) -> io::Result<HashSet<(i64, i64)>> {
+    let lines = crate::read_lines(filename)?;
     let mut roll_locations = HashSet::new();
 
-    if let Ok(lines) = crate::read_lines(filename) {
-        for (row, line) in lines.map_while(Result::ok).enumerate() {
-            roll_locations.extend(
-                line.trim()
-                    .chars()
-                    .enumerate()
-                    .filter_map(|(i, c)| (c == '@').then_some((row as i64, i as i64))),
-            );
-        }
+    for (row, line) in lines.map_while(Result::ok).enumerate() {
+        roll_locations.extend(
+            line.trim()
+                .chars()
+                .enumerate()
+                .filter_map(|(i, c)| (c == '@').then_some((row as i64, i as i64))),
+        );
     }
 
-    roll_locations
+    Ok(roll_locations)
 }
 
 fn generate_map(towels: &HashSet<(i64, i64)>) -> HashMap<(i64, i64), Vec<(i64, i64)>> {
@@ -94,13 +96,13 @@ mod tests {
 
     #[test]
     fn part_one_example() {
-        let paper_rolls = parse_input("input/day04-test.txt");
+        let paper_rolls = parse_input("input/day04-test.txt").unwrap();
         assert_eq!(remove_paper_rolls(&paper_rolls, false), 13);
     }
 
     #[test]
     fn part_two_example() {
-        let paper_rolls = parse_input("input/day04-test.txt");
+        let paper_rolls = parse_input("input/day04-test.txt").unwrap();
         assert_eq!(remove_paper_rolls(&paper_rolls, true), 43);
     }
 }

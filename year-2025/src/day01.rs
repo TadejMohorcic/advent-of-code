@@ -1,7 +1,8 @@
+use std::io;
 use std::path::Path;
 
-pub fn main() {
-    let instructions = parse_input("input/day01.txt");
+pub fn main() -> io::Result<()> {
+    let instructions = parse_input("input/day01.txt")?;
     let starting_pos = 50;
     let part_one = land_on_zero(&instructions, starting_pos);
     let part_two = pass_zero(&instructions, starting_pos);
@@ -9,24 +10,25 @@ pub fn main() {
     println!("\n--- Day 1: Secret Entrance ---");
     println!(" - Part one solution: {}", part_one);
     println!(" - Part two solution: {}\n", part_two);
+
+    Ok(())
 }
 
-fn parse_input<P: AsRef<Path>>(filename: P) -> Vec<i64> {
+fn parse_input<P: AsRef<Path>>(filename: P) -> io::Result<Vec<i64>> {
+    let lines = crate::read_lines(&filename)?;
     let mut instructions = Vec::new();
 
-    if let Ok(lines) = crate::read_lines(filename) {
-        for line in lines.map_while(Result::ok) {
-            let mut line = line.trim().chars();
-            let direction = if line.next().unwrap() == 'L' { -1 } else { 1 };
-            let rotation = line
-                .by_ref()
-                .take_while(|c| c.is_ascii_digit())
-                .fold(0, |acc, c| 10 * acc + c.to_digit(10).unwrap() as i64);
-            instructions.push(direction * rotation);
-        }
+    for line in lines.map_while(Result::ok) {
+        let mut line = line.trim().chars();
+        let direction = if line.next().unwrap() == 'L' { -1 } else { 1 };
+        let rotation = line
+            .by_ref()
+            .take_while(|c| c.is_ascii_digit())
+            .fold(0, |acc, c| 10 * acc + c.to_digit(10).unwrap() as i64);
+        instructions.push(direction * rotation);
     }
 
-    instructions
+    Ok(instructions)
 }
 
 fn land_on_zero(instructions: &[i64], mut position: i64) -> i64 {
@@ -67,13 +69,13 @@ mod tests {
 
     #[test]
     fn part_one_example() {
-        let instructions = parse_input("input/day01-test.txt");
+        let instructions = parse_input("input/day01-test.txt").unwrap();
         assert_eq!(land_on_zero(&instructions, 50), 3);
     }
 
     #[test]
     fn part_two_example() {
-        let instructions = parse_input("input/day01-test.txt");
+        let instructions = parse_input("input/day01-test.txt").unwrap();
         assert_eq!(pass_zero(&instructions, 50), 6);
     }
 }

@@ -15,19 +15,29 @@ mod day10;
 mod day11;
 mod day12;
 
+type Solver = fn() -> io::Result<()>;
+
 fn main() {
-    day01::main();
-    day02::main();
-    day03::main();
-    day04::main();
-    day05::main();
-    day06::main();
-    day07::main();
-    day08::main();
-    day09::main();
-    day10::main();
-    day11::main();
-    day12::main();
+    let days: &[(&str, Solver)] = &[
+        ("Day 1", day01::main),
+        ("Day 2", day02::main),
+        ("Day 3", day03::main),
+        ("Day 4", day04::main),
+        ("Day 5", day05::main),
+        ("Day 6", day06::main),
+        ("Day 7", day07::main),
+        ("Day 8", day08::main),
+        ("Day 9", day09::main),
+        ("Day 10", day10::main),
+        ("Day 11", day11::main),
+        ("Day 12", day12::main),
+    ];
+
+    for (name, run) in days {
+        if let Err(e) = run() {
+            eprintln!("{} failed: {}\n", name, e);
+        }
+    }
 }
 
 fn read_lines<P>(filename: P) -> io::Result<io::Lines<io::BufReader<File>>>

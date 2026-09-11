@@ -1,12 +1,15 @@
+use std::io;
 use std::path::Path;
 
-pub fn main() {
-    let boxes = parse_input("input/day08.txt");
+pub fn main() -> io::Result<()> {
+    let boxes = parse_input("input/day08.txt")?;
     let (part_one, part_two) = connect_boxes(&boxes, 1000);
 
     println!("--- Day 8: Playground ---");
     println!(" - Part one solution: {}", part_one);
     println!(" - Part two solution: {}\n", part_two);
+
+    Ok(())
 }
 
 #[derive(Clone, Copy)]
@@ -16,21 +19,20 @@ struct Position {
     z: i64,
 }
 
-fn parse_input<P: AsRef<Path>>(filename: P) -> Vec<Position> {
+fn parse_input<P: AsRef<Path>>(filename: P) -> io::Result<Vec<Position>> {
+    let lines = crate::read_lines(filename)?;
     let mut boxes = Vec::new();
 
-    if let Ok(lines) = crate::read_lines(filename) {
-        for line in lines.map_while(Result::ok) {
-            let mut position = line.trim().split(',').map(|x| x.parse::<i64>().unwrap());
-            boxes.push(Position {
-                x: position.next().unwrap(),
-                y: position.next().unwrap(),
-                z: position.next().unwrap(),
-            })
-        }
+    for line in lines.map_while(Result::ok) {
+        let mut position = line.trim().split(',').map(|x| x.parse::<i64>().unwrap());
+        boxes.push(Position {
+            x: position.next().unwrap(),
+            y: position.next().unwrap(),
+            z: position.next().unwrap(),
+        })
     }
 
-    boxes
+    Ok(boxes)
 }
 
 struct UnionFind {
@@ -124,14 +126,14 @@ mod tests {
 
     #[test]
     fn part_one_example() {
-        let boxes = parse_input("input/day08-test.txt");
+        let boxes = parse_input("input/day08-test.txt").unwrap();
         let (part_one, _) = connect_boxes(&boxes, 10);
         assert_eq!(part_one, 40)
     }
 
     #[test]
     fn part_two_example() {
-        let boxes = parse_input("input/day08-test.txt");
+        let boxes = parse_input("input/day08-test.txt").unwrap();
         let (_, part_two) = connect_boxes(&boxes, 10);
         assert_eq!(part_two, 25272)
     }

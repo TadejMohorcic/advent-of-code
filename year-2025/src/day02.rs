@@ -1,9 +1,10 @@
 use std::collections::HashSet;
+use std::io;
 use std::ops::Range;
 use std::path::Path;
 
-pub fn main() {
-    let ranges = parse_input("input/day02-test.txt");
+pub fn main() -> io::Result<()> {
+    let ranges = parse_input("input/day02.txt")?;
     let longest_num = ranges.iter().map(|r| number_len(r.end)).max().unwrap_or(0);
     let part_one = invalid_id_sum(&ranges, false, longest_num);
     let part_two = invalid_id_sum(&ranges, true, longest_num);
@@ -11,23 +12,24 @@ pub fn main() {
     println!("--- Day 2: Gift Shop ---");
     println!(" - Part one solution: {}", part_one);
     println!(" - Part two solution: {}\n", part_two);
+
+    Ok(())
 }
 
-fn parse_input<P: AsRef<Path>>(filename: P) -> Vec<Range<u64>> {
+fn parse_input<P: AsRef<Path>>(filename: P) -> io::Result<Vec<Range<u64>>> {
+    let lines = crate::read_lines(filename)?;
     let mut ranges = Vec::new();
 
-    if let Ok(lines) = crate::read_lines(filename) {
-        for line in lines.map_while(Result::ok) {
-            ranges.extend(line.trim().split(',').map(|part| {
-                let (start_str, end_str) = part.split_once('-').unwrap();
-                let start = start_str.parse::<u64>().unwrap();
-                let end = end_str.parse::<u64>().unwrap() + 1;
-                start..end
-            }));
-        }
+    for line in lines.map_while(Result::ok) {
+        ranges.extend(line.trim().split(',').map(|part| {
+            let (start_str, end_str) = part.split_once('-').unwrap();
+            let start = start_str.parse::<u64>().unwrap();
+            let end = end_str.parse::<u64>().unwrap() + 1;
+            start..end
+        }));
     }
 
-    ranges
+    Ok(ranges)
 }
 
 fn number_len(n: u64) -> usize {
@@ -87,14 +89,14 @@ mod tests {
 
     #[test]
     fn part_one_example() {
-        let ranges = parse_input("input/day02-test.txt");
+        let ranges = parse_input("input/day02-test.txt").unwrap();
         let longest_num = ranges.iter().map(|r| number_len(r.end)).max().unwrap_or(0);
         assert_eq!(invalid_id_sum(&ranges, false, longest_num), 1227775554);
     }
 
     #[test]
     fn part_two_example() {
-        let ranges = parse_input("input/day02-test.txt");
+        let ranges = parse_input("input/day02-test.txt").unwrap();
         let longest_num = ranges.iter().map(|r| number_len(r.end)).max().unwrap_or(0);
         assert_eq!(invalid_id_sum(&ranges, true, longest_num), 4174379265);
     }
