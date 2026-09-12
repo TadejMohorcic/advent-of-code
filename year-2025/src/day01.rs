@@ -7,7 +7,7 @@ pub fn main() -> io::Result<()> {
     let part_one = land_on_zero(&instructions, starting_pos);
     let part_two = pass_zero(&instructions, starting_pos);
 
-    println!("\n--- Day 1: Secret Entrance ---");
+    println!("--- Day 1: Secret Entrance ---");
     println!(" - Part one solution: {}", part_one);
     println!(" - Part two solution: {}\n", part_two);
 
