@@ -1,294 +1,217 @@
-use std::fs::File;
-use std::io::{BufRead, BufReader, Error};
-
 use std::collections::HashSet;
+use std::io;
+use std::path::Path;
 
-pub fn main() -> Result<(), Error> {
-    // let path = "input/day15-test.txt";
-    let path = "input/day15.txt";
-
-    let input = File::open(path)?;
-    let buffered = BufReader::new(input);
-
-    let mut t = MapType::Grid;
-
-    let mut obstacles = HashSet::new();
-    let mut boxes = HashSet::new();
-    let mut start: Option<Position> = None;
-
-    let mut instructions = Vec::new();
-
-    let mut row = 0;
-
-    for line in buffered.lines() {
-        let line_ok = line?;
-
-        if line_ok.is_empty() {
-            t = MapType::Instructions;
-            continue;
-        }
-
-        match t {
-            MapType::Grid => {
-                let grid_row: Vec<(usize, char)> = line_ok.trim().chars().enumerate().collect();
-
-                obstacles.extend(
-                    &mut grid_row
-                        .iter()
-                        .filter(|(_, x)| *x == '#')
-                        .map(|(c, _)| Position {
-                            x: *c as i32,
-                            y: row,
-                        }),
-                );
-
-                boxes.extend(
-                    &mut grid_row
-                        .iter()
-                        .filter(|(_, x)| *x == 'O')
-                        .map(|(c, _)| Position {
-                            x: *c as i32,
-                            y: row,
-                        }),
-                );
-
-                if let Some((col, _)) = grid_row.iter().filter(|(_, x)| *x == '@').next() {
-                    start = Some(Position {
-                        x: *col as i32,
-                        y: row,
-                    });
-                }
-
-                row += 1;
-            }
-            MapType::Instructions => {
-                let grid_row: Vec<char> = line_ok.trim().chars().collect();
-                instructions.extend(&grid_row);
-            }
-        }
-    }
-
-    let start = start.unwrap();
-
-    let part_one = move_robot(start.clone(), &obstacles, &boxes, &instructions, false);
-    let part_two = move_robot(start, &obstacles, &boxes, &instructions, true);
+pub fn main() -> io::Result<()> {
+    let (obstacles, boxes, start, instructions) = parse_input("input/day15.txt")?;
+    let part_one = move_robot(start, &boxes, &obstacles, &instructions, false);
+    let part_two = move_robot(start, &boxes, &obstacles, &instructions, true);
 
     println!("--- Day 15: Warehouse Woes ---");
     println!(" - Part one solution: {}", part_one);
-    println!(" - Part two solution: {}", part_two);
-    println!("");
+    println!(" - Part two solution: {}\n", part_two);
 
     Ok(())
 }
 
-enum MapType {
-    Grid,
-    Instructions,
-}
+type Warehouse = (
+    HashSet<(i64, i64)>,
+    HashSet<(i64, i64)>,
+    (i64, i64),
+    Vec<char>,
+);
 
-#[derive(Eq, PartialEq, Hash, Clone)]
-struct Position {
-    x: i32,
-    y: i32,
-}
+fn parse_input<P: AsRef<Path>>(filename: P) -> io::Result<Warehouse> {
+    let lines = crate::read_lines(filename)?;
+    let mut obstacles = HashSet::new();
+    let mut boxes = HashSet::new();
+    let mut start = None;
+    let mut instructions = Vec::new();
+    let mut is_maze = true;
 
-impl Position {
-    fn step(&self, dir: (i32, i32)) -> Position {
-        Position {
-            x: self.x + dir.0,
-            y: self.y + dir.1,
+    for (row, line) in lines.map_while(Result::ok).enumerate() {
+        if line.is_empty() {
+            is_maze = false;
+            continue;
+        }
+
+        if is_maze {
+            obstacles.extend(
+                line.trim()
+                    .chars()
+                    .enumerate()
+                    .filter_map(|(col, ch)| (ch == '#').then_some((row as i64, col as i64))),
+            );
+            boxes.extend(
+                line.trim()
+                    .chars()
+                    .enumerate()
+                    .filter_map(|(col, ch)| (ch == 'O').then_some((row as i64, col as i64))),
+            );
+
+            if let Some(col) = line.trim().chars().position(|c| c == '@').map(|n| n as i64) {
+                start = Some((row as i64, col));
+            }
+        } else {
+            instructions.extend(line.trim().chars());
         }
     }
+
+    Ok((obstacles, boxes, start.unwrap(), instructions))
 }
 
-fn get_direction(instruction: &char) -> (i32, i32) {
-    match instruction {
-        '>' => return (1, 0),
-        '<' => return (-1, 0),
-        '^' => return (0, -1),
-        'v' => return (0, 1),
-        _ => return (0, 0),
-    }
+fn instructions_to_dir(instructions: &[char]) -> Vec<(i64, i64)> {
+    instructions
+        .iter()
+        .map(|ch| match ch {
+            '>' => (0, 1),
+            '<' => (0, -1),
+            '^' => (-1, 0),
+            _ => (1, 0),
+        })
+        .collect()
 }
 
 fn move_boxes(
-    pos: &Position,
-    obstacles: &HashSet<Position>,
-    boxes: &mut HashSet<Position>,
-    dir: (i32, i32),
+    pos: (i64, i64),
+    dir: (i64, i64),
+    boxes: &mut HashSet<(i64, i64)>,
+    obstacles: &HashSet<(i64, i64)>,
 ) -> bool {
-    let empty = Position {
-        x: pos.x + dir.0,
-        y: pos.y + dir.1,
-    };
+    let next_pos = (pos.0 + dir.0, pos.1 + dir.1);
 
-    let can_move = !obstacles.contains(&empty)
-        && (!boxes.contains(&empty) || move_boxes(&empty, obstacles, boxes, dir));
-
-    if can_move {
-        boxes.remove(&pos);
-        boxes.insert(empty);
-        return true;
-    } else {
+    if obstacles.contains(&next_pos)
+        || (boxes.contains(&next_pos) && !move_boxes(next_pos, dir, boxes, obstacles))
+    {
         return false;
     }
+
+    if boxes.contains(&pos) {
+        boxes.remove(&pos);
+        boxes.insert(next_pos);
+    }
+
+    true
 }
 
-fn positions_to_check(pos: &Position, dir: (i32, i32)) -> Vec<Position> {
-    let mut to_check = Vec::new();
-
+fn positions_to_check(pos: (i64, i64), dir: (i64, i64)) -> Vec<(i64, i64)> {
     match dir {
-        (0, _) => {
-            to_check.push(Position {
-                x: pos.x + dir.0,
-                y: pos.y + dir.1,
-            });
-            to_check.push(Position {
-                x: pos.x + dir.0 - 1,
-                y: pos.y + dir.1,
-            })
-        }
-        (1, 0) => to_check.push(Position {
-            x: pos.x + dir.0,
-            y: pos.y + dir.1,
-        }),
-        (-1, 0) => to_check.push(Position {
-            x: pos.x + 2 * dir.0,
-            y: pos.y + 2 * dir.1,
-        }),
-        _ => unreachable!("Should never happen!"),
+        (0, 1) => vec![(pos.0, pos.1 + dir.1)],
+        (0, -1) => vec![(pos.0, pos.1 + 2 * dir.1)],
+        _ => vec![(pos.0 + dir.0, pos.1), (pos.0 + dir.0, pos.1 - 1)],
     }
-
-    to_check
 }
 
-fn boxes_to_check(pos: &Position, dir: (i32, i32)) -> Vec<Position> {
-    let mut to_check = Vec::new();
-
+fn box_positions_to_check(pos: (i64, i64), dir: (i64, i64)) -> Vec<(i64, i64)> {
     match dir {
-        (0, _) => {
-            to_check.push(Position {
-                x: pos.x + dir.0,
-                y: pos.y + dir.1,
-            });
-            to_check.push(Position {
-                x: pos.x + dir.0 - 1,
-                y: pos.y + dir.1,
-            });
-            to_check.push(Position {
-                x: pos.x + dir.0 + 1,
-                y: pos.y + dir.1,
-            })
-        }
-        (_, 0) => to_check.push(Position {
-            x: pos.x + 2 * dir.0,
-            y: pos.y + 2 * dir.1,
-        }),
-        _ => unreachable!("Should never happen!"),
-    }
-
-    to_check
-}
-
-fn move_wide_boxes(pos: &Position, boxes: &mut HashSet<Position>, dir: (i32, i32)) {
-    let to_check = boxes_to_check(pos, dir);
-
-    for position in &to_check {
-        if boxes.contains(&position) {
-            move_wide_boxes(position, boxes, dir);
+        (0, _) => vec![(pos.0, pos.1 + 2 * dir.1)],
+        _ => {
+            vec![
+                (pos.0 + dir.0, pos.1),
+                (pos.0 + dir.0, pos.1 - 1),
+                (pos.0 + dir.0, pos.1 + 1),
+            ]
         }
     }
-
-    boxes.remove(pos);
-    boxes.insert(Position {
-        x: pos.x + dir.0,
-        y: pos.y + dir.1,
-    });
 }
 
-fn check_wide_boxes(
-    pos: &Position,
-    obstacles: &HashSet<Position>,
-    boxes: &mut HashSet<Position>,
-    dir: (i32, i32),
+fn can_move_wide(
+    pos: (i64, i64),
+    dir: (i64, i64),
+    boxes: &HashSet<(i64, i64)>,
+    obstacles: &HashSet<(i64, i64)>,
+    is_box: bool,
 ) -> bool {
-    let to_check = boxes_to_check(pos, dir);
+    let to_check = if is_box {
+        box_positions_to_check(pos, dir)
+    } else {
+        positions_to_check(pos, dir)
+    };
 
-    let can_move = to_check.iter().all(|x| {
-        !obstacles.contains(x) && (!boxes.contains(x) || check_wide_boxes(x, obstacles, boxes, dir))
-    });
+    to_check.iter().all(|p| {
+        !obstacles.contains(p)
+            && (!boxes.contains(p) || can_move_wide(*p, dir, boxes, obstacles, true))
+    })
+}
 
-    can_move
+fn move_wide_boxes(
+    pos: (i64, i64),
+    dir: (i64, i64),
+    boxes: &mut HashSet<(i64, i64)>,
+    is_box: bool,
+) {
+    let to_check = if is_box {
+        box_positions_to_check(pos, dir)
+    } else {
+        positions_to_check(pos, dir)
+    };
+
+    for p in to_check {
+        if boxes.contains(&p) {
+            move_wide_boxes(p, dir, boxes, true);
+        }
+    }
+
+    if is_box {
+        boxes.remove(&pos);
+        boxes.insert((pos.0 + dir.0, pos.1 + dir.1));
+    }
 }
 
 fn move_robot(
-    start: Position,
-    obstacles: &HashSet<Position>,
-    boxes: &HashSet<Position>,
-    instructions: &Vec<char>,
+    mut pos: (i64, i64),
+    boxes: &HashSet<(i64, i64)>,
+    obstacles: &HashSet<(i64, i64)>,
+    instructions: &[char],
     part: bool,
-) -> i32 {
-    let mut pos = if part {
-        Position {
-            x: 2 * start.x,
-            y: start.y,
-        }
-    } else {
-        start
-    };
+) -> i64 {
+    let directions = instructions_to_dir(instructions);
 
-    let mut boxes = if part {
-        boxes
-            .iter()
-            .map(|x| Position { x: 2 * x.x, y: x.y })
-            .collect()
-    } else {
-        boxes.clone()
-    };
+    if part {
+        let mut pos = (pos.0, 2 * pos.1);
+        let mut boxes = boxes.iter().map(|(row, col)| (*row, col * 2)).collect();
+        let obstacles = obstacles.iter().map(|(row, col)| (*row, col * 2)).collect();
 
-    let obstacles = if part {
-        obstacles
-            .iter()
-            .map(|x| Position { x: 2 * x.x, y: x.y })
-            .collect()
-    } else {
-        obstacles.clone()
-    };
-
-    for instruction in instructions {
-        let dir = get_direction(instruction);
-
-        if part {
-            let to_check = positions_to_check(&pos, dir);
-
-            let can_move: bool = to_check.iter().all(|x| {
-                !obstacles.contains(x)
-                    && (!boxes.contains(x) || check_wide_boxes(x, &obstacles, &mut boxes, dir))
-            });
-
-            if can_move {
-                for position in &to_check {
-                    if boxes.contains(position) {
-                        move_wide_boxes(position, &mut boxes, dir);
-                    }
-                }
-
-                pos = pos.step(dir);
-            }
-        } else {
-            let empty = Position {
-                x: pos.x + dir.0,
-                y: pos.y + dir.1,
-            };
-
-            let can_move = !obstacles.contains(&empty)
-                && (!boxes.contains(&empty) || move_boxes(&empty, &obstacles, &mut boxes, dir));
-
-            if can_move {
-                pos = pos.step(dir);
+        for dir in directions {
+            if can_move_wide(pos, dir, &boxes, &obstacles, false) {
+                move_wide_boxes(pos, dir, &mut boxes, false);
+                pos = (pos.0 + dir.0, pos.1 + dir.1);
             }
         }
+
+        boxes.iter().map(|(r, c)| 100 * r + c).sum()
+    } else {
+        let mut boxes = boxes.iter().cloned().collect();
+
+        for dir in directions {
+            if move_boxes(pos, dir, &mut boxes, obstacles) {
+                pos = (pos.0 + dir.0, pos.1 + dir.1);
+            }
+        }
+
+        boxes.iter().map(|(r, c)| 100 * r + c).sum()
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn part_one_example() {
+        let (obstacles, boxes, start, instructions) = parse_input("input/day15-test.txt").unwrap();
+        assert_eq!(
+            move_robot(start, &boxes, &obstacles, &instructions, false),
+            10092
+        );
     }
 
-    boxes.iter().map(|x| 100 * x.y + x.x).sum()
+    #[test]
+    fn part_two_example() {
+        let (obstacles, boxes, start, instructions) = parse_input("input/day15-test.txt").unwrap();
+        assert_eq!(
+            move_robot(start, &boxes, &obstacles, &instructions, true),
+            9021
+        );
+    }
 }
