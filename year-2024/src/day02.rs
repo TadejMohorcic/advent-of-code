@@ -1,29 +1,31 @@
+use std::io;
 use std::path::Path;
 
-pub fn main() {
-    let reports = parse_input("input/day02.txt");
+pub fn main() -> io::Result<()> {
+    let reports = parse_input("input/day02.txt")?;
     let part_one = check_reports(&reports, false);
     let part_two = check_reports(&reports, true);
 
     println!("--- Day 2: Red-Nosed Reports ---");
     println!(" - Part one solution: {}", part_one);
     println!(" - Part two solution: {}\n", part_two);
+
+    Ok(())
 }
 
-fn parse_input<P: AsRef<Path>>(filename: P) -> Vec<Vec<i64>> {
+fn parse_input<P: AsRef<Path>>(filename: P) -> io::Result<Vec<Vec<i64>>> {
+    let lines = crate::read_lines(&filename)?;
     let mut reports = Vec::new();
 
-    if let Ok(lines) = crate::read_lines(filename) {
-        for line in lines.map_while(Result::ok) {
-            reports.push(
-                line.split_whitespace()
-                    .map(|n| n.parse().unwrap())
-                    .collect(),
-            )
-        }
+    for line in lines.map_while(Result::ok) {
+        reports.push(
+            line.split_whitespace()
+                .map(|n| n.parse().unwrap())
+                .collect(),
+        )
     }
 
-    reports
+    Ok(reports)
 }
 
 fn get_differences(report: &[i64]) -> Vec<i64> {
@@ -72,13 +74,13 @@ mod tests {
 
     #[test]
     fn part_one_example() {
-        let reports = parse_input("input/day02-test.txt");
+        let reports = parse_input("input/day02-test.txt").unwrap();
         assert_eq!(check_reports(&reports, false), 2);
     }
 
     #[test]
     fn part_two_example() {
-        let reports = parse_input("input/day02-test.txt");
+        let reports = parse_input("input/day02-test.txt").unwrap();
         assert_eq!(check_reports(&reports, true), 4);
     }
 }

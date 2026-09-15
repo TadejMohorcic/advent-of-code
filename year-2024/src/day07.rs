@@ -1,32 +1,34 @@
+use std::io;
 use std::path::Path;
 
-pub fn main() {
-    let equations = parse_input("input/day07.txt");
+pub fn main() -> io::Result<()> {
+    let equations = parse_input("input/day07.txt")?;
     let part_one = calibrate_equations(&equations, false);
     let part_two = calibrate_equations(&equations, true);
 
     println!("--- Day 7: Bridge Repair ---");
     println!(" - Part one solution: {}", part_one);
     println!(" - Part two solution: {}\n", part_two);
+
+    Ok(())
 }
 
-fn parse_input<P: AsRef<Path>>(filename: P) -> Vec<(i64, Vec<i64>)> {
+fn parse_input<P: AsRef<Path>>(filename: P) -> io::Result<Vec<(i64, Vec<i64>)>> {
+    let lines = crate::read_lines(filename)?;
     let mut equations = Vec::new();
 
-    if let Ok(lines) = crate::read_lines(filename) {
-        for line in lines.map_while(Result::ok) {
-            let split = line.trim().split_once(": ").unwrap();
-            let target = split.0.parse::<i64>().unwrap();
-            let numbers = split
-                .1
-                .split_whitespace()
-                .map(|n| n.parse::<i64>().unwrap())
-                .collect();
-            equations.push((target, numbers))
-        }
+    for line in lines.map_while(Result::ok) {
+        let split = line.trim().split_once(": ").unwrap();
+        let target = split.0.parse::<i64>().unwrap();
+        let numbers = split
+            .1
+            .split_whitespace()
+            .map(|n| n.parse::<i64>().unwrap())
+            .collect();
+        equations.push((target, numbers))
     }
 
-    equations
+    Ok(equations)
 }
 
 fn can_produce_target(
@@ -84,13 +86,13 @@ mod tests {
 
     #[test]
     fn part_one_example() {
-        let equations = parse_input("input/day07-test.txt");
+        let equations = parse_input("input/day07-test.txt").unwrap();
         assert_eq!(calibrate_equations(&equations, false), 3749);
     }
 
     #[test]
     fn part_two_example() {
-        let equations = parse_input("input/day07-test.txt");
+        let equations = parse_input("input/day07-test.txt").unwrap();
         assert_eq!(calibrate_equations(&equations, true), 11387);
     }
 }

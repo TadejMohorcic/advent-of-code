@@ -1,8 +1,9 @@
 use regex::Regex;
+use std::io;
 use std::path::Path;
 
-pub fn main() {
-    let memory = parse_input("input/day03.txt");
+pub fn main() -> io::Result<()> {
+    let memory = parse_input("input/day03.txt")?;
     let instructions1 = Regex::new(r"mul\((\d{1,3}),(\d{1,3})\)").unwrap();
     let instructions2 = Regex::new(r"mul\((\d{1,3}),(\d{1,3})\)|do\(\)|don't\(\)").unwrap();
     let part_one = multiply_instructions(&memory, instructions1);
@@ -11,18 +12,19 @@ pub fn main() {
     println!("--- Day 3: Mull It Over ---");
     println!(" - Part one solution: {}", part_one);
     println!(" - Part two solution: {}\n", part_two);
+
+    Ok(())
 }
 
-fn parse_input<P: AsRef<Path>>(filename: P) -> String {
+fn parse_input<P: AsRef<Path>>(filename: P) -> io::Result<String> {
+    let lines = crate::read_lines(&filename)?;
     let mut memory = String::new();
 
-    if let Ok(lines) = crate::read_lines(filename) {
-        for line in lines.map_while(Result::ok) {
-            memory.push_str(line.trim());
-        }
+    for line in lines.map_while(Result::ok) {
+        memory.push_str(line.trim());
     }
 
-    memory
+    Ok(memory)
 }
 
 fn multiply_instructions(string: &str, re: Regex) -> i64 {
@@ -52,14 +54,14 @@ mod tests {
 
     #[test]
     fn part_one_example() {
-        let memory = parse_input("input/day03-test1.txt");
+        let memory = parse_input("input/day03-test1.txt").unwrap();
         let instructions = Regex::new(r"mul\((\d{1,3}),(\d{1,3})\)").unwrap();
         assert_eq!(multiply_instructions(&memory, instructions), 161);
     }
 
     #[test]
     fn part_two_example() {
-        let memory = parse_input("input/day03-test2.txt");
+        let memory = parse_input("input/day03-test2.txt").unwrap();
         let instructions = Regex::new(r"mul\((\d{1,3}),(\d{1,3})\)|do\(\)|don't\(\)").unwrap();
         assert_eq!(multiply_instructions(&memory, instructions), 48);
     }

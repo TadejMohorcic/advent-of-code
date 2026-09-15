@@ -1,50 +1,52 @@
 use rayon::prelude::*;
 use std::collections::{HashMap, HashSet};
+use std::io;
 use std::path::Path;
 use std::sync::Arc;
 
-pub fn main() {
-    let (rows, cols, guard, size) = parse_input("input/day06.txt");
+pub fn main() -> io::Result<()> {
+    let (rows, cols, guard, size) = parse_input("input/day06.txt")?;
     let (part_one, to_check) = get_visited_locations(guard, &rows, &cols, size);
     let part_two = get_obstructions(guard, &rows, &cols, &to_check);
 
     println!("--- Day 6: Guard Gallivant ---");
     println!(" - Part one solution: {}", part_one);
     println!(" - Part two solution: {}\n", part_two);
+
+    Ok(())
 }
 
 type Grid = HashMap<i64, Arc<Vec<i64>>>;
 
-fn parse_input<P: AsRef<Path>>(filename: P) -> (Grid, Grid, (i64, i64), i64) {
+fn parse_input<P: AsRef<Path>>(filename: P) -> io::Result<(Grid, Grid, (i64, i64), i64)> {
+    let lines = crate::read_lines(filename)?;
     let mut rows: Grid = HashMap::new();
     let mut cols_build: HashMap<i64, Vec<i64>> = HashMap::new();
     let mut guard_pos = None;
     let mut size = None;
 
-    if let Ok(lines) = crate::read_lines(filename) {
-        for (row, line) in lines.map_while(Result::ok).enumerate() {
-            size = Some(line.trim().len() as i64);
-            let obstacles: Vec<i64> = line
-                .trim()
-                .chars()
-                .enumerate()
-                .filter_map(|(n, c)| (c == '#').then_some(n as i64))
-                .collect();
+    for (row, line) in lines.map_while(Result::ok).enumerate() {
+        size = Some(line.trim().len() as i64);
+        let obstacles: Vec<i64> = line
+            .trim()
+            .chars()
+            .enumerate()
+            .filter_map(|(n, c)| (c == '#').then_some(n as i64))
+            .collect();
 
-            if let Some(col) = line.trim().chars().position(|c| c == '^').map(|n| n as i64) {
-                guard_pos = Some((row as i64, col));
-            }
-
-            if obstacles.is_empty() {
-                continue;
-            }
-
-            for c in &obstacles {
-                cols_build.entry(*c).or_default().push(row as i64);
-            }
-
-            rows.insert(row as i64, Arc::new(obstacles));
+        if let Some(col) = line.trim().chars().position(|c| c == '^').map(|n| n as i64) {
+            guard_pos = Some((row as i64, col));
         }
+
+        if obstacles.is_empty() {
+            continue;
+        }
+
+        for c in &obstacles {
+            cols_build.entry(*c).or_default().push(row as i64);
+        }
+
+        rows.insert(row as i64, Arc::new(obstacles));
     }
 
     let cols: Grid = cols_build
@@ -52,7 +54,7 @@ fn parse_input<P: AsRef<Path>>(filename: P) -> (Grid, Grid, (i64, i64), i64) {
         .map(|(k, v)| (k, Arc::new(v)))
         .collect();
 
-    (rows, cols, guard_pos.unwrap(), size.unwrap())
+    Ok((rows, cols, guard_pos.unwrap(), size.unwrap()))
 }
 
 fn get_next_obstacle(
@@ -209,14 +211,14 @@ mod tests {
 
     #[test]
     fn part_one_example() {
-        let (rows, cols, guard, size) = parse_input("input/day06-test.txt");
+        let (rows, cols, guard, size) = parse_input("input/day06-test.txt").unwrap();
         let (visited_len, _) = get_visited_locations(guard, &rows, &cols, size);
         assert_eq!(visited_len, 41);
     }
 
     #[test]
     fn part_two_example() {
-        let (rows, cols, guard, size) = parse_input("input/day06-test.txt");
+        let (rows, cols, guard, size) = parse_input("input/day06-test.txt").unwrap();
         let (_, to_check) = get_visited_locations(guard, &rows, &cols, size);
         assert_eq!(get_obstructions(guard, &rows, &cols, &to_check), 6);
     }

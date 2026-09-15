@@ -1,34 +1,36 @@
 use rayon::prelude::*;
 use std::collections::HashSet;
+use std::io;
 use std::path::Path;
 
-pub fn main() {
+pub fn main() -> io::Result<()> {
     let steps = 100;
     let width = 101;
     let height = 103;
-    let robots = parse_input("input/day14.txt");
+    let robots = parse_input("input/day14.txt")?;
     let part_one = get_safety_factor(&robots, steps, width, height);
     let part_two = find_christmas_tree(&robots, width, height);
 
     println!("--- Day 14: Restroom Redoubt ---");
     println!(" - Part one solution: {}", part_one);
     println!(" - Part two solution: {}\n", part_two);
+
+    Ok(())
 }
 
-fn parse_input<P: AsRef<Path>>(filename: P) -> Vec<Vec<i64>> {
+fn parse_input<P: AsRef<Path>>(filename: P) -> io::Result<Vec<Vec<i64>>> {
+    let lines = crate::read_lines(filename)?;
     let mut robots = Vec::new();
 
-    if let Ok(lines) = crate::read_lines(filename) {
-        for line in lines.map_while(Result::ok) {
-            robots.push(
-                line.split(&['=', ',', ' '][..])
-                    .filter_map(|n| n.parse::<i64>().ok())
-                    .collect(),
-            );
-        }
+    for line in lines.map_while(Result::ok) {
+        robots.push(
+            line.split(&['=', ',', ' '][..])
+                .filter_map(|n| n.parse::<i64>().ok())
+                .collect(),
+        );
     }
 
-    robots
+    Ok(robots)
 }
 
 fn move_robots(robots: &[Vec<i64>], steps: i64, w: i64, h: i64) -> Vec<Vec<i64>> {
@@ -128,13 +130,13 @@ mod tests {
 
     #[test]
     fn part_one_example() {
-        let robots = parse_input("input/day14-test.txt");
+        let robots = parse_input("input/day14-test.txt").unwrap();
         assert_eq!(get_safety_factor(&robots, 100, 11, 7), 12);
     }
 
     #[test]
     fn part_two_example() {
-        let robots = parse_input("input/day14-test.txt");
+        let robots = parse_input("input/day14-test.txt").unwrap();
         assert_eq!(find_christmas_tree(&robots, 11, 7), -63);
     }
 }

@@ -1,25 +1,27 @@
 use std::collections::HashSet;
+use std::io;
 use std::path::Path;
 
-pub fn main() {
-    let farm_map = parse_input("input/day12.txt");
+pub fn main() -> io::Result<()> {
+    let farm_map = parse_input("input/day12.txt")?;
     let (part_one, part_two) = calculate_price(&farm_map);
 
     println!("--- Day 12: Garden Groups ---");
     println!(" - Part one solution: {}", part_one);
     println!(" - Part two solution: {}\n", part_two);
+
+    Ok(())
 }
 
-fn parse_input<P: AsRef<Path>>(filename: P) -> Vec<Vec<char>> {
+fn parse_input<P: AsRef<Path>>(filename: P) -> io::Result<Vec<Vec<char>>> {
+    let lines = crate::read_lines(filename)?;
     let mut farm_map = Vec::new();
 
-    if let Ok(lines) = crate::read_lines(filename) {
-        for line in lines.map_while(Result::ok) {
-            farm_map.push(line.trim().chars().collect());
-        }
+    for line in lines.map_while(Result::ok) {
+        farm_map.push(line.trim().chars().collect());
     }
 
-    farm_map
+    Ok(farm_map)
 }
 
 fn flood_fill(
@@ -108,14 +110,14 @@ mod tests {
 
     #[test]
     fn part_one_example() {
-        let farm_map = parse_input("input/day12-test.txt");
+        let farm_map = parse_input("input/day12-test.txt").unwrap();
         let (part_one, _) = calculate_price(&farm_map);
         assert_eq!(part_one, 1930);
     }
 
     #[test]
     fn part_two_example() {
-        let farm_map = parse_input("input/day12-test.txt");
+        let farm_map = parse_input("input/day12-test.txt").unwrap();
         let (_, part_two) = calculate_price(&farm_map);
         assert_eq!(part_two, 1206);
     }

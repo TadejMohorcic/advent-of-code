@@ -1,26 +1,28 @@
+use std::io;
 use std::path::Path;
 
-pub fn main() {
-    let word_search = parse_input("input/day04.txt");
+pub fn main() -> io::Result<()> {
+    let word_search = parse_input("input/day04.txt")?;
     let part_one = find_xmas(&word_search);
     let part_two = find_x_mas(&word_search);
 
     println!("--- Day 4: Ceres Search ---");
     println!(" - Part one solution: {}", part_one);
     println!(" - Part two solution: {}\n", part_two);
+
+    Ok(())
 }
 
-fn parse_input<P: AsRef<Path>>(filename: P) -> Vec<Vec<char>> {
+fn parse_input<P: AsRef<Path>>(filename: P) -> io::Result<Vec<Vec<char>>> {
+    let lines = crate::read_lines(filename)?;
     let mut word_search = Vec::new();
 
-    if let Ok(lines) = crate::read_lines(filename) {
-        for line in lines.map_while(Result::ok) {
-            let chars = line.trim().chars().collect();
-            word_search.push(chars);
-        }
+    for line in lines.map_while(Result::ok) {
+        let chars = line.trim().chars().collect();
+        word_search.push(chars);
     }
 
-    word_search
+    Ok(word_search)
 }
 
 fn is_xmas(word_search: &[Vec<char>], i: usize, j: usize) -> i64 {
@@ -123,13 +125,13 @@ mod tests {
 
     #[test]
     fn part_one_example() {
-        let word_search = parse_input("input/day04-test.txt");
+        let word_search = parse_input("input/day04-test.txt").unwrap();
         assert_eq!(find_xmas(&word_search), 18);
     }
 
     #[test]
     fn part_two_example() {
-        let word_search = parse_input("input/day04-test.txt");
+        let word_search = parse_input("input/day04-test.txt").unwrap();
         assert_eq!(find_x_mas(&word_search), 9);
     }
 }

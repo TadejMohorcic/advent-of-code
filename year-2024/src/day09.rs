@@ -1,31 +1,33 @@
+use std::io;
 use std::path::Path;
 
-pub fn main() {
-    let mut data = parse_input("input/day09.txt");
+pub fn main() -> io::Result<()> {
+    let mut data = parse_input("input/day09.txt")?;
     let part_one = format_single(&data);
     let part_two = format_whole(&mut data);
 
     println!("--- Day 9: Disk Fragmenter ---");
     println!(" - Part one solution: {}", part_one);
     println!(" - Part two solution: {}\n", part_two);
+
+    Ok(())
 }
 
-fn parse_input<P: AsRef<Path>>(filename: P) -> Vec<(i64, i64)> {
+fn parse_input<P: AsRef<Path>>(filename: P) -> io::Result<Vec<(i64, i64)>> {
+    let lines = crate::read_lines(filename)?;
     let mut data = Vec::new();
 
-    if let Ok(lines) = crate::read_lines(filename) {
-        for line in lines.map_while(Result::ok) {
-            data.extend(line.trim().chars().enumerate().map(|(i, n)| {
-                if i % 2 == 0 {
-                    ((i / 2) as i64, n.to_digit(10).unwrap() as i64)
-                } else {
-                    (-1, n.to_digit(10).unwrap() as i64)
-                }
-            }));
-        }
+    for line in lines.map_while(Result::ok) {
+        data.extend(line.trim().chars().enumerate().map(|(i, n)| {
+            if i % 2 == 0 {
+                ((i / 2) as i64, n.to_digit(10).unwrap() as i64)
+            } else {
+                (-1, n.to_digit(10).unwrap() as i64)
+            }
+        }));
     }
 
-    data
+    Ok(data)
 }
 
 fn get_sum(start: i64, end: i64) -> i64 {
@@ -120,13 +122,13 @@ mod tests {
 
     #[test]
     fn part_one_example() {
-        let data = parse_input("input/day09-test.txt");
+        let data = parse_input("input/day09-test.txt").unwrap();
         assert_eq!(format_single(&data), 1928);
     }
 
     #[test]
     fn part_two_example() {
-        let mut data = parse_input("input/day09-test.txt");
+        let mut data = parse_input("input/day09-test.txt").unwrap();
         assert_eq!(format_whole(&mut data), 2858);
     }
 }

@@ -1,47 +1,51 @@
 use std::collections::HashSet;
+use std::io;
 use std::path::Path;
 
-pub fn main() {
-    let (order_rules, pages) = parse_input("input/day05.txt");
+pub fn main() -> io::Result<()> {
+    let (order_rules, pages) = parse_input("input/day05.txt")?;
     let part_one = get_middle_page(&order_rules, &pages, false);
     let part_two = get_middle_page(&order_rules, &pages, true);
 
     println!("--- Day 5: Print Queue ---");
     println!(" - Part one solution: {}", part_one);
     println!(" - Part two solution: {}\n", part_two);
+
+    Ok(())
 }
 
-fn parse_input<P: AsRef<Path>>(filename: P) -> (Vec<Vec<i64>>, Vec<Vec<i64>>) {
+type PageUpdates = (Vec<Vec<i64>>, Vec<Vec<i64>>);
+
+fn parse_input<P: AsRef<Path>>(filename: P) -> io::Result<PageUpdates> {
+    let lines = crate::read_lines(filename)?;
     let mut page_order_rules = Vec::new();
     let mut update_pages = Vec::new();
     let mut is_rule = true;
 
-    if let Ok(lines) = crate::read_lines(filename) {
-        for line in lines.map_while(Result::ok) {
-            if line.is_empty() {
-                is_rule = false;
-                continue;
-            }
+    for line in lines.map_while(Result::ok) {
+        if line.is_empty() {
+            is_rule = false;
+            continue;
+        }
 
-            if is_rule {
-                let rule = line
-                    .trim()
-                    .split('|')
-                    .map(|n| n.parse::<i64>().unwrap())
-                    .collect();
-                page_order_rules.push(rule);
-            } else {
-                let pages = line
-                    .trim()
-                    .split(',')
-                    .map(|n| n.parse::<i64>().unwrap())
-                    .collect();
-                update_pages.push(pages);
-            }
+        if is_rule {
+            let rule = line
+                .trim()
+                .split('|')
+                .map(|n| n.parse::<i64>().unwrap())
+                .collect();
+            page_order_rules.push(rule);
+        } else {
+            let pages = line
+                .trim()
+                .split(',')
+                .map(|n| n.parse::<i64>().unwrap())
+                .collect();
+            update_pages.push(pages);
         }
     }
 
-    (page_order_rules, update_pages)
+    Ok((page_order_rules, update_pages))
 }
 
 fn build_adjacency_matrix(order_rules: &[Vec<i64>]) -> (Vec<Vec<i64>>, Vec<i64>) {
@@ -151,13 +155,13 @@ mod tests {
 
     #[test]
     fn part_one_example() {
-        let (order_rules, pages) = parse_input("input/day05-test.txt");
+        let (order_rules, pages) = parse_input("input/day05-test.txt").unwrap();
         assert_eq!(get_middle_page(&order_rules, &pages, false), 143);
     }
 
     #[test]
     fn part_two_example() {
-        let (order_rules, pages) = parse_input("input/day05-test.txt");
+        let (order_rules, pages) = parse_input("input/day05-test.txt").unwrap();
         assert_eq!(get_middle_page(&order_rules, &pages, true), 123);
     }
 }

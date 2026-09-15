@@ -1,33 +1,37 @@
 use std::collections::{HashMap, HashSet};
+use std::io;
 use std::path::Path;
 
-pub fn main() {
-    let (antennas, dim) = parse_input("input/day08.txt");
+pub fn main() -> io::Result<()> {
+    let (antennas, dim) = parse_input("input/day08.txt")?;
     let part_one = get_unique_positions(&antennas, dim, false);
     let part_two = get_unique_positions(&antennas, dim, true);
 
     println!("--- Day 8: Resonant Collinearity ---");
     println!(" - Part one solution: {}", part_one);
     println!(" - Part two solution: {}\n", part_two);
+
+    Ok(())
 }
 
-fn parse_input<P: AsRef<Path>>(filename: P) -> (HashMap<char, Vec<(i64, i64)>>, usize) {
+type Antennas = (HashMap<char, Vec<(i64, i64)>>, usize);
+
+fn parse_input<P: AsRef<Path>>(filename: P) -> io::Result<Antennas> {
+    let lines = crate::read_lines(filename)?;
     let mut antenna_locations: HashMap<char, Vec<(i64, i64)>> = HashMap::new();
     let mut dimension = 0;
 
-    if let Ok(lines) = crate::read_lines(filename) {
-        for (row, line) in lines.map_while(Result::ok).enumerate() {
-            for (col, antenna) in line.trim().chars().enumerate().filter(|(_, c)| *c != '.') {
-                antenna_locations
-                    .entry(antenna)
-                    .or_default()
-                    .push((row as i64, col as i64));
-            }
-            dimension = row;
+    for (row, line) in lines.map_while(Result::ok).enumerate() {
+        for (col, antenna) in line.trim().chars().enumerate().filter(|(_, c)| *c != '.') {
+            antenna_locations
+                .entry(antenna)
+                .or_default()
+                .push((row as i64, col as i64));
         }
+        dimension = row;
     }
 
-    (antenna_locations, dimension + 1)
+    Ok((antenna_locations, dimension + 1))
 }
 
 fn get_antinode_positions(
@@ -97,13 +101,13 @@ mod tests {
 
     #[test]
     fn part_one_example() {
-        let (antennas, dim) = parse_input("input/day08-test.txt");
+        let (antennas, dim) = parse_input("input/day08-test.txt").unwrap();
         assert_eq!(get_unique_positions(&antennas, dim, false), 14);
     }
 
     #[test]
     fn part_two_example() {
-        let (antennas, dim) = parse_input("input/day08-test.txt");
+        let (antennas, dim) = parse_input("input/day08-test.txt").unwrap();
         assert_eq!(get_unique_positions(&antennas, dim, true), 34);
     }
 }

@@ -1,29 +1,31 @@
 use std::collections::HashMap;
+use std::io;
 use std::path::Path;
 
-pub fn main() {
-    let stone_map = parse_input("input/day11.txt");
+pub fn main() -> io::Result<()> {
+    let stone_map = parse_input("input/day11.txt")?;
     let part_one = blink(&stone_map, 25);
     let part_two = blink(&stone_map, 75);
 
     println!("--- Day 11: Plutonian Pebbles ---");
     println!(" - Part one solution: {}", part_one);
     println!(" - Part two solution: {}\n", part_two);
+
+    Ok(())
 }
 
-fn parse_input<P: AsRef<Path>>(filename: P) -> HashMap<i64, i64> {
+fn parse_input<P: AsRef<Path>>(filename: P) -> io::Result<HashMap<i64, i64>> {
+    let lines = crate::read_lines(filename)?;
     let mut stone_map: HashMap<i64, i64> = HashMap::new();
 
-    if let Ok(lines) = crate::read_lines(filename) {
-        for line in lines.map_while(Result::ok) {
-            let stones = line.split_whitespace();
-            for stone in stones {
-                *stone_map.entry(stone.parse::<i64>().unwrap()).or_default() += 1;
-            }
+    for line in lines.map_while(Result::ok) {
+        let stones = line.split_whitespace();
+        for stone in stones {
+            *stone_map.entry(stone.parse::<i64>().unwrap()).or_default() += 1;
         }
     }
 
-    stone_map
+    Ok(stone_map)
 }
 
 fn blink(stones: &HashMap<i64, i64>, times: usize) -> i64 {
@@ -58,13 +60,13 @@ mod tests {
 
     #[test]
     fn part_one_example() {
-        let stone_map = parse_input("input/day11-test.txt");
+        let stone_map = parse_input("input/day11-test.txt").unwrap();
         assert_eq!(blink(&stone_map, 25), 55312);
     }
 
     #[test]
     fn part_two_example() {
-        let stone_map = parse_input("input/day11-test.txt");
+        let stone_map = parse_input("input/day11-test.txt").unwrap();
         assert_eq!(blink(&stone_map, 75), 65601038650482);
     }
 }

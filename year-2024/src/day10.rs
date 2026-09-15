@@ -1,31 +1,33 @@
 use std::collections::HashSet;
+use std::io;
 use std::path::Path;
 
-pub fn main() {
-    let topographic_map = parse_input("input/day10.txt");
+pub fn main() -> io::Result<()> {
+    let topographic_map = parse_input("input/day10.txt")?;
     let part_one = score_all_trailheads(&topographic_map, false);
     let part_two = score_all_trailheads(&topographic_map, true);
 
     println!("--- Day 10: Hoof It ---");
     println!(" - Part one solution: {}", part_one);
     println!(" - Part two solution: {}\n", part_two);
+
+    Ok(())
 }
 
-fn parse_input<P: AsRef<Path>>(filename: P) -> Vec<Vec<i64>> {
+fn parse_input<P: AsRef<Path>>(filename: P) -> io::Result<Vec<Vec<i64>>> {
+    let lines = crate::read_lines(filename)?;
     let mut topographic_map = Vec::new();
 
-    if let Ok(lines) = crate::read_lines(filename) {
-        for line in lines.map_while(Result::ok) {
-            topographic_map.push(
-                line.trim()
-                    .chars()
-                    .map(|n| n.to_digit(10).unwrap() as i64)
-                    .collect(),
-            );
-        }
+    for line in lines.map_while(Result::ok) {
+        topographic_map.push(
+            line.trim()
+                .chars()
+                .map(|n| n.to_digit(10).unwrap() as i64)
+                .collect(),
+        );
     }
 
-    topographic_map
+    Ok(topographic_map)
 }
 
 fn get_trailhead_score(
@@ -97,13 +99,13 @@ mod tests {
 
     #[test]
     fn part_one_example() {
-        let topographic_map = parse_input("input/day10-test.txt");
+        let topographic_map = parse_input("input/day10-test.txt").unwrap();
         assert_eq!(score_all_trailheads(&topographic_map, false), 36);
     }
 
     #[test]
     fn part_two_example() {
-        let topographic_map = parse_input("input/day10-test.txt");
+        let topographic_map = parse_input("input/day10-test.txt").unwrap();
         assert_eq!(score_all_trailheads(&topographic_map, true), 81);
     }
 }

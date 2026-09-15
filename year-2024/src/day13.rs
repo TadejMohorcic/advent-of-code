@@ -1,41 +1,43 @@
+use std::io;
 use std::path::Path;
 
-pub fn main() {
-    let (a, b, t) = parse_input("input/day13.txt");
+pub fn main() -> io::Result<()> {
+    let (a, b, t) = parse_input("input/day13.txt")?;
     let part_one = solve_problems(&a, &b, &t, false);
     let part_two = solve_problems(&a, &b, &t, true);
 
     println!("--- Day 13: Claw Contraption ---");
     println!(" - Part one solution: {}", part_one);
     println!(" - Part two solution: {}\n", part_two);
+
+    Ok(())
 }
 
 type Problem = (Vec<(i64, i64)>, Vec<(i64, i64)>, Vec<(i64, i64)>);
 
-fn parse_input<P: AsRef<Path>>(filename: P) -> Problem {
+fn parse_input<P: AsRef<Path>>(filename: P) -> io::Result<Problem> {
+    let lines = crate::read_lines(filename)?;
     let mut a_buttons = Vec::new();
     let mut b_buttons = Vec::new();
     let mut targets = Vec::new();
     let mut toggle = 0;
 
-    if let Ok(lines) = crate::read_lines(filename) {
-        for line in lines.map_while(Result::ok) {
-            let mut num_iter = line.trim().split(&['+', ',', '=']);
+    for line in lines.map_while(Result::ok) {
+        let mut num_iter = line.trim().split(&['+', ',', '=']);
 
-            if let (Some(x), Some(y)) = (num_iter.nth(1), num_iter.nth(1)) {
-                let x = x.parse::<i64>().unwrap();
-                let y = y.parse::<i64>().unwrap();
-                match toggle {
-                    0 => a_buttons.push((x, y)),
-                    1 => b_buttons.push((x, y)),
-                    _ => targets.push((x, y)),
-                }
-                toggle = (toggle + 1) % 3;
+        if let (Some(x), Some(y)) = (num_iter.nth(1), num_iter.nth(1)) {
+            let x = x.parse::<i64>().unwrap();
+            let y = y.parse::<i64>().unwrap();
+            match toggle {
+                0 => a_buttons.push((x, y)),
+                1 => b_buttons.push((x, y)),
+                _ => targets.push((x, y)),
             }
+            toggle = (toggle + 1) % 3;
         }
     }
 
-    (a_buttons, b_buttons, targets)
+    Ok((a_buttons, b_buttons, targets))
 }
 
 fn solve_problem(a: (i64, i64), b: (i64, i64), mut target: (i64, i64), part: bool) -> i64 {
@@ -74,13 +76,13 @@ mod tests {
 
     #[test]
     fn part_one_example() {
-        let (a, b, t) = parse_input("input/day13-test.txt");
+        let (a, b, t) = parse_input("input/day13-test.txt").unwrap();
         assert_eq!(solve_problems(&a, &b, &t, false), 480);
     }
 
     #[test]
     fn part_two_example() {
-        let (a, b, t) = parse_input("input/day13-test.txt");
+        let (a, b, t) = parse_input("input/day13-test.txt").unwrap();
         assert_eq!(solve_problems(&a, &b, &t, true), 875318608908);
     }
 }
