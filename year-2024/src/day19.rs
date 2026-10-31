@@ -1,60 +1,53 @@
-use std::fs::File;
-use std::io::{BufRead, BufReader, Error};
-
 use std::collections::HashMap;
+use std::io;
+use std::path::Path;
 
-pub fn main() -> Result<(), Error> {
-    // let path = "input/day19-test.txt";
-    let path = "input/day19.txt";
+pub fn main() -> io::Result<()> {
+    let (patterns, towels) = parse_input("input/day19.txt")?;
+    let (part_one, part_two) = check_designs(&towels, &patterns);
 
-    let input = File::open(path)?;
-    let buffered = BufReader::new(input);
+    println!("--- Day 19: Linen Layout ---");
+    println!(" - Part one solution: {}", part_one);
+    println!(" - Part two solution: {}\n", part_two);
 
+    Ok(())
+}
+
+fn parse_input<P: AsRef<Path>>(filename: P) -> io::Result<(Vec<String>, Vec<String>)> {
+    let lines = crate::read_lines(&filename)?;
     let mut is_towel = false;
-
     let mut patterns: Option<Vec<String>> = None;
     let mut towels = Vec::new();
 
-    for line in buffered.lines() {
-        let line_ok = line?;
-
-        if line_ok.is_empty() {
+    for line in lines.map_while(Result::ok) {
+        if line.is_empty() {
             is_towel = true;
             continue;
         }
 
         if is_towel {
-            towels.push(line_ok.trim().to_string());
+            towels.push(line.trim().to_string());
         } else {
-            patterns = Some(line_ok.trim().split(", ").map(|x| x.to_string()).collect());
+            patterns = Some(line.trim().split(", ").map(|x| x.to_string()).collect());
         }
     }
 
-    let patterns = patterns.unwrap();
-
-    let (part_one, part_two) = check_designs(&towels, &patterns);
-
-    println!("--- Day 19: Linen Layout ---");
-    println!(" - Part one solution: {}", part_one);
-    println!(" - Part two solution: {}", part_two);
-    println!("");
-
-    Ok(())
+    Ok((patterns.unwrap(), towels))
 }
 
 fn check_design(
     towel: &String,
-    patterns: &Vec<String>,
+    patterns: &[String],
     index: usize,
-    cache: &mut HashMap<String, u64>,
-) -> u64 {
+    cache: &mut HashMap<String, i64>,
+) -> i64 {
     let n = towel.len();
 
     if index == n {
-        return 1;
+        1
     } else {
         if let Some(res) = cache.get(&towel[index..].to_string()) {
-            return *res;
+            *res
         } else {
             let mut result = 0;
 
@@ -68,23 +61,41 @@ fn check_design(
 
             cache.insert(towel[index..].to_string(), result);
 
-            return result;
+            result
         }
     }
 }
 
-fn check_designs(towels: &Vec<String>, patterns: &Vec<String>) -> (u64, u64) {
+fn check_designs(towels: &[String], patterns: &[String]) -> (i64, i64) {
     let mut part_one = 0;
     let mut part_two = 0;
-
     let mut cache = HashMap::new();
 
-    for towel in towels {
+    towels.iter().for_each(|towel| {
         let designs_avalible = check_design(towel, patterns, 0, &mut cache);
 
-        part_one += (designs_avalible > 0) as u64;
+        part_one += (designs_avalible > 0) as i64;
         part_two += designs_avalible;
-    }
+    });
 
     (part_one, part_two)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn part_one_example() {
+        let (patterns, towels) = parse_input("input/day19-test.txt").unwrap();
+        let (part_one, _) = check_designs(&towels, &patterns);
+        assert_eq!(part_one, 6);
+    }
+
+    #[test]
+    fn part_two_example() {
+        let (patterns, towels) = parse_input("input/day19-test.txt").unwrap();
+        let (_, part_two) = check_designs(&towels, &patterns);
+        assert_eq!(part_two, 16);
+    }
 }
