@@ -93,7 +93,7 @@ mod tests {
     }
 
     #[test]
-    fn part_tow_example() {
+    fn part_two_example() {
         let obstacles = parse_input("input/day18-test.txt").unwrap();
         let maze_size = 6;
         assert_eq!(smallest_break(&obstacles, maze_size), "6,1");
