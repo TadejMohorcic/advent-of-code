@@ -1,32 +1,27 @@
-use std::fs::File;
-use std::io::{BufRead, BufReader, Error};
+use std::collections::{HashMap, HashSet};
+use std::io;
+use std::path::Path;
 
-use std::collections::{HashMap, HashSet, VecDeque};
-
-pub fn main() -> Result<(), Error> {
-    // let path = "input/day22-test.txt";
-    let path = "input/day22.txt";
-
-    let input = File::open(path)?;
-    let buffered = BufReader::new(input);
-
-    let mut secret_numbers = Vec::new();
-
-    for line in buffered.lines() {
-        let line_ok = line?;
-
-        let num: i64 = line_ok.trim().parse().expect("Should be a number!");
-        secret_numbers.push(num);
-    }
-
-    let (part_one, part_two) = get_new_secret_numbers(secret_numbers);
+pub fn main() -> io::Result<()> {
+    let secret_numbers = parse_input("input/day22.txt")?;
+    let (part_one, part_two) = get_new_secret_numbers(&secret_numbers);
 
     println!("--- Day 22: Monkey Market ---");
     println!(" - Part one solution: {}", part_one);
-    println!(" - Part two solution: {}", part_two);
-    println!("");
+    println!(" - Part two solution: {}\n", part_two);
 
     Ok(())
+}
+
+fn parse_input<P: AsRef<Path>>(filename: P) -> io::Result<Vec<i64>> {
+    let lines = crate::read_lines(&filename)?;
+    let mut secret_numbers = Vec::new();
+
+    for line in lines.map_while(Result::ok) {
+        secret_numbers.push(line.trim().parse::<i64>().unwrap());
+    }
+
+    Ok(secret_numbers)
 }
 
 fn next_secret_number(mut num: i64) -> i64 {
@@ -40,33 +35,49 @@ fn next_secret_number(mut num: i64) -> i64 {
     num
 }
 
-fn get_new_secret_numbers(nums: Vec<i64>) -> (i64, i64) {
+fn get_new_secret_numbers(numbers: &[i64]) -> (i64, i64) {
     let mut total_cost = 0;
+    let mut bananas = HashMap::new();
 
-    let mut bananas: HashMap<VecDeque<i64>, i64> = HashMap::new();
+    for n in numbers {
+        let mut secret = *n;
+        let mut sequence = [0; 4];
+        let mut seen = HashSet::new();
 
-    for mut num in nums {
-        let mut sequence = VecDeque::new();
-        let mut seen_sequences = HashSet::new();
+        for step in 0..2000 {
+            let next = next_secret_number(secret);
+            let price = next % 10;
+            sequence.rotate_left(1);
+            sequence[3] = price - secret % 10;
 
-        for _ in 0..2000 {
-            let new_num = next_secret_number(num);
-
-            sequence.push_back(new_num % 10 - num % 10);
-
-            if sequence.len() > 4 {
-                sequence.pop_front();
+            if step > 2 && seen.insert(sequence) {
+                *bananas.entry(sequence).or_insert(0) += price;
             }
 
-            if sequence.len() == 4 && !seen_sequences.contains(&sequence) {
-                *bananas.entry(sequence.clone()).or_insert(0) += new_num % 10;
-                seen_sequences.insert(sequence.clone());
-            }
-
-            num = new_num;
+            secret = next;
         }
-        total_cost += num;
+
+        total_cost += secret;
     }
 
-    (total_cost, bananas.iter().map(|(_, v)| *v).max().unwrap())
+    (total_cost, bananas.values().copied().max().unwrap())
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn part_one_example() {
+        let secret_numbers = parse_input("input/day22-test1.txt").unwrap();
+        let (part_one, _) = get_new_secret_numbers(&secret_numbers);
+        assert_eq!(part_one, 37327623);
+    }
+
+    #[test]
+    fn part_two_example() {
+        let secret_numbers = parse_input("input/day22-test2.txt").unwrap();
+        let (_, part_two) = get_new_secret_numbers(&secret_numbers);
+        assert_eq!(part_two, 23);
+    }
 }
